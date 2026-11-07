@@ -87,10 +87,14 @@
      change is recorded rather than presented as routine maintenance.</p>
 
   <h2 id="gates">The two kinds of gate</h2>
-  <h3>In-pack load gate</h3>
-  <p>A consent flow: the pack does not operate until a player agrees, and other packs
-     query it through <code>gate/is_open</code>. This is a runtime behaviour inside a
-     datapack. It cannot be enforced by the repository.</p>
+  <h3>In-pack load gate &mdash; retired</h3>
+  <p>macroEngine and RTWrapper-v1.0.1 used to hold the pack closed until a player
+     approved it, with <code>gate/is_open</code> as the query other packs used. It was
+     removed: it reported the pack closed while it was open, and enabling a feature
+     tripped it. No pack in this repository has an in-pack gate now, and nothing
+     queries one.</p>
+  <p>The general point still holds: a runtime gate inside a datapack cannot be
+     enforced by the repository, and deleting one is a decision, not maintenance.</p>
 
   <h3>Repository gate</h3>
   <p>The guard and the archive validator. This protects the <em>repository</em>. It has

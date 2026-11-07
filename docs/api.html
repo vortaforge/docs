@@ -125,17 +125,18 @@
 
   <h2 id="interop">Datapack interop contract</h2>
   <p>Archived packs that expose state use scoreboard objectives as the contract.
-     The stable, documented pattern is the gate query:</p>
+     macroEngine used to publish one: <code>macroengine:gate/is_open</code>, backed by
+     <code>#macroengine.open</code> in <code>vortaforge.gate</code>, so another pack could
+     ask whether it was usable before relying on it.</p>
 
-  <pre><code># Query: "is this pack currently usable?"
-execute if function macroengine:gate/is_open run function mypack:do_the_thing</code></pre>
-
-  <table>
-    <thead><tr><th>Objective</th><th>Holder</th><th>Meaning</th></tr></thead>
-    <tbody>
-      <tr><td><code>vortaforge.gate</code></td><td><code>#macroengine.open</code></td><td><code>1</code> when the pack is open and usable, <code>0</code> otherwise.</td></tr>
-    </tbody>
-  </table>
+  <div class="warnbox">
+    <strong>That query no longer exists.</strong> The gate layer was removed from
+    macroEngine and from RTWrapper-v1.0.1: it reported the pack closed while it was
+    open, and enabling a feature tripped it. Any call to
+    <code>macroengine:gate/is_open</code> in another pack is now a broken function
+    call and should be deleted. There is no replacement &mdash; an archived datapack
+    has no readiness state to poll.
+  </div>
 
   <div class="warnbox">
     <strong>Archived &mdash; no compatibility promise.</strong>

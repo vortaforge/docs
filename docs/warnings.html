@@ -79,7 +79,7 @@
     <ol>
       <li><a href="#notice">What you clicked</a></li>
       <li><a href="#disarmed">What "disarmed" means</a></li>
-      <li><a href="#gate">How the gate works</a></li>
+      <li><a href="#gate">Gates, and why one was removed</a></li>
       <li><a href="#version">Why some packs cannot show the warning</a></li>
       <li><a href="#you-should">If you still want to run a pack</a></li>
       <li><a href="#other-docs">Other documentation</a></li>
@@ -139,30 +139,25 @@
         archived tooling.</li>
   </ul>
 
-  <h2 id="gate">3. How the gate works</h2>
+  <h2 id="gate">3. Gates, and why one was removed</h2>
   <p>"Gate" in this project means one of two things, and both are real mechanisms
      rather than a label in a README.</p>
 
   <h3>The in-pack load gate</h3>
-  <p>A gated pack does not run until a player consents. The pattern, as implemented
-     in the largest pack, is a single authoritative score that anything else may
-     query:</p>
+  <p><strong>Removed.</strong> macroEngine and RTWrapper-v1.0.1 carried a five-part
+     admission layer &mdash; version, per-player approval, consent notice,
+     incomplete-load, reload-loop &mdash; implemented as two guard lines copied to the
+     top of 1242 of macroEngine's 1280 functions. It was removed because it did not
+     work: the dynamic-command switch read as off while it was on, and turning it on
+     tripped the gate instead of enabling the feature.</p>
 
-  <pre><code># macroengine:gate/is_open
-# Answers whether the pack is usable, without printing anything.
-# Deliberately has NO gate guard: its whole job is to answer while the pack is closed.
-execute if score #macroengine.open vortaforge.gate matches 1 run return 1
-return 0</code></pre>
+  <p>Both packs now run on load the way any other datapack does. If you were calling
+     <code>macroengine:gate/is_open</code>, that id does not resolve any more; delete
+     the call.</p>
 
-  <p>Callers check it before relying on the pack:
-     <code>execute if function macroengine:gate/is_open run function mypack:use_it</code>.
-     The gate has a consent prompt, a decline path, a permit list and a way to
-     revoke, so "closed" is the default and opening it is an explicit act.</p>
-
-  <p>Packs that never had a gate now carry the archived warning described above.
-     A warning is <em>not</em> a security boundary: it tells the truth about the
-     pack's status, it does not make an ungated pack safe. Do not read a warning as
-     an audit.</p>
+  <p>A warning is <em>not</em> a gate and never was. It tells the truth about the
+     pack's status on load; it does not disable anything and does not make an
+     ungated pack safe. Do not read a warning as an audit.</p>
 
   <h3>The repository guard</h3>
   <p>Separately, <code>scripts/repo/datapack_guard.py</code> is a fail-closed check
