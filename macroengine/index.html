@@ -3,134 +3,333 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>macroEngine &mdash; VortaForge Docs</title>
-<meta name="description" content="macroEngine: a Minecraft 26.3 engine delivered as 29 Fabric mods that compose at load time.">
+<title>macroEngine &mdash; VortaForge documentation</title>
+<meta name="description" content="macroEngine: a 34-artifact modular command engine for Minecraft 26.3, with 22 hook slots and no gates.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html" class="here">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html">API</a><a href="../docs/versions.html">Versions</a><a href="../docs/php.html">PHP</a><a href="../docs/warnings.html">Warnings</a><a href="../docs/archive.html">Archive</a><a href="../docs/maintainers.html">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / macroEngine</p>
+<div class="hero">
   <h1>macroEngine</h1>
-  <p class="sub">One engine, split into a core and twenty-eight modules you install
-     a la carte. Every module is a Fabric mod that also works as a plain data pack.</p>
+  <p class="lede">A command engine for Minecraft 26.3, split into one core pack
+     and 33 modules. Install all of it, or install the parts you want - the
+     engine does not notice which.</p>
+</div>
 
-  <div class="note">
-    <strong>Status.</strong> This is the rebuilt macroEngine, not the archived
-    <code>macroengine-datapack</code>. The original single pack is still archived and
-    still warns when you load it; see the <a href="../docs/warnings.html">pack
-    warnings</a>. This page describes the split that replaced it.
+<div class="grid">
+  <div class="card">
+    <h3>Numbers</h3>
+    <ul>
+      <li><strong>34</strong> artifacts: 1 core + 33 modules</li>
+      <li><strong>1,529</strong> functions</li>
+      <li><strong>22</strong> hook slots</li>
+      <li><strong>0</strong> gates</li>
+    </ul>
   </div>
-
-  <h2>What it is</h2>
-  <p>macroEngine is a command-driven engine for Minecraft data packs: a scheduler, a
-     permission layer, player and world state, an event bus, hooks, and a large
-     function API on top. The original shipped as one data pack of roughly 1,300
-     functions. That pack is now split into <strong>one core and 28 modules</strong>,
-     each packaged as a Fabric mod.</p>
-
-  <p>The split exists so that installing the engine does not mean installing all of
-     it. A server that never touches permissions does not load the permission
-     module, and its functions are not in memory.</p>
-
-  <h2>The one rule the layout rests on</h2>
-  <p>Every module depends on the core. <strong>No module depends on another
-     module.</strong> Where one feature needs another, the call goes through a hook
-     slot the core owns &mdash; the core defines the slot, and whichever module
-     implements the concept fills it.</p>
-
-  <p>This is not tidiness. It is what makes a module removable: with the rule held,
-     you can delete any one jar and the remainder still loads. That property is
-     checked automatically &mdash; see <a href="architecture.html">architecture</a>.</p>
-
-  <h2>Install</h2>
-  <ol>
-    <li>Fabric loader for Minecraft 26.3, Java 25.</li>
-    <li><strong>Fabric API is required.</strong> The pack inside each jar is read by
-        <code>fabric-resource-loader</code>, which ships in Fabric API, not in the
-        loader. Every manifest declares the dependency, so a missing Fabric API stops
-        the game with a readable message rather than loading 29 mods that do nothing.</li>
-    <li>Drop <code>me_core_module</code> in <code>mods/</code>, plus whichever modules
-        you want.</li>
-  </ol>
-
-  <h2>Or use it as a data pack</h2>
-  <p>The same jar works in a world&rsquo;s <code>datapacks/</code> folder with no mod
-     loader at all. The jar root holds <code>pack.mcmeta</code> and <code>data/</code>
-     at exactly the paths the game expects; the Fabric metadata is additional, not a
-     wrapper. That is the compatibility promise the original pack had, kept.</p>
-
-  <h2>What is inside a jar</h2>
-  <pre><code>me_cb_module-1.0.0.jar
-├── fabric.mod.json                       id `macroengine-cb`
-├── com/vortaforge/macroengine/
-│   └── macroengine_cb/MacroEngineEntry.class   the ModInitializer
-├── pack.mcmeta                           data pack manifest, format 121
-└── data/me_cb_module/...                 the pack itself</code></pre>
-
-  <p>The class exists because Fabric requires one. It implements
-     <code>ModInitializer</code> and does nothing: the behaviour is the data pack,
-     which Fabric reads out of the jar&rsquo;s <code>data/</code> directory. Nothing is
-     registered from Java.</p>
-
-  <div class="warnbox">
-    <strong>A class that is merely present is not enough.</strong> Fabric constructs
-    the declared entry point and casts it to <code>ModInitializer</code>. A class that
-    does not implement the interface fails that cast and stops the entire server, not
-    just the offending mod. This project shipped that once.
+  <div class="card">
+    <h3>Runtime</h3>
+    <ul>
+      <li>Minecraft <strong>26.3</strong></li>
+      <li>Fabric Loader <strong>0.20.1</strong></li>
+      <li>Java <strong>25</strong></li>
+      <li>Pack format <strong>121.0</strong></li>
+    </ul>
   </div>
+</div>
 
-  <h2>Where to go next</h2>
-  <table>
-    <thead><tr><th>Page</th><th>What it covers</th></tr></thead>
-    <tbody>
-      <tr><td><a href="modules.html">Module list</a></td>
-          <td>All 29 packs, what each is for, and how many functions it carries.</td></tr>
-      <tr><td><a href="reference.html">Function reference</a></td>
-          <td>How to call the engine, the return-value contract, and the input
-              storage convention.</td></tr>
-      <tr><td><a href="architecture.html">Architecture</a></td>
-          <td>The core/module rule, hook slots, event extension points, and the
-              checks that enforce them.</td></tr>
-      <tr><td><a href="../docs/versions.html">Version matrix</a></td>
-          <td>Minecraft, loader and Java versions.</td></tr>
-    </tbody>
-  </table>
+<h2>What it is</h2>
+<p>macroEngine gives a server a command layer: conditional commands, loops,
+   variables, permissions, macros, world edits, text output and a
+   deferred-command queue, all built out of functions that Minecraft itself
+   runs. There is no plugin, no server software fork and no client mod in the
+   path - it is a datapack that happens to ship as Fabric mods.</p>
 
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="modules.html">module list</a> &middot;
-    <a href="reference.html">function reference</a>
-  </footer>
+<p>The distinction matters when something goes wrong. A datapack failing is a
+   refused <code>function</code> call in the log with the exact id that did not
+   resolve. A plugin failing is a stack trace through four layers of an API. The
+   first one can be debugged in a text editor.</p>
+
+<h2>The one rule the layout rests on</h2>
+<div class="note">
+  <strong>A pack cannot call another pack.</strong> No import, no namespace
+  visibility, no dependency resolution. So the core owns every seam - a function
+  tag - and modules add themselves to a seam instead of calling each other.
+</div>
+<p>Everything else is downstream of that sentence, including why removing a
+   module works and why no module knows what its siblings are called. The long
+   version is on <a href="architecture.html">Architecture</a>.</p>
+
+<h2>Install</h2>
+<ol>
+  <li>Install Fabric Loader 0.20.1 for Minecraft 26.3, with a Java 25
+      runtime. A 21 runtime will refuse to start.</li>
+  <li>Copy the jars you want into <code>mods/</code>.
+      <strong><code>macroengine-core</code> is mandatory</strong>; every other
+      jar is optional and each declares the core as a dependency.</li>
+  <li>Start the server. No config file is required for the core.</li>
+  <li>Check the log for <code>macroEngine</code> and the module count you
+      installed. A module whose dependency is missing is refused by Fabric at
+      startup rather than loading and failing later.</li>
+</ol>
+
+<h3>What to install first</h3>
+<p>The core alone is a working engine with nothing to do. The modules that make
+   it feel like an engine - by function count, because more functions means more
+   command surface:</p>
+<ul>
+<li><code>macroengine-core</code> &mdash; 911 functions</li>
+<li><code>macroengine-cmd</code> &mdash; 123 functions</li>
+<li><code>macroengine-player</code> &mdash; 58 functions</li>
+<li><code>macroengine-lib</code> &mdash; 53 functions</li>
+<li><code>macroengine-input</code> &mdash; 41 functions</li>
+<li><code>macroengine-hook</code> &mdash; 40 functions</li>
+</ul>
+
+<p>The smallest modules are the narrowest:</p>
+<ul>
+<li><code>macroengine-diagnostics</code> &mdash; 2 functions</li>
+<li><code>macroengine-gamerule</code> &mdash; 3 functions</li>
+<li><code>macroengine-sound</code> &mdash; 3 functions</li>
+<li><code>macroengine-tui</code> &mdash; 4 functions</li>
+</ul>
+
+<h2>Or use it as a data pack</h2>
+<p>Each jar bundles <code>pack.mcmeta</code> and <code>data/</code> at its root,
+   so the same content works as a plain datapack in
+   <code>world/datapacks/</code>. What you lose is Fabric's dependency check: a
+   datapack has no <code>depends</code>, so an orphan module loads and its calls
+   vanish silently instead of being refused at startup.</p>
+
+<p>For a single-player world that is acceptable. For a server, install the mods
+   - the refusal at startup is worth having.</p>
+
+<h2>What is inside a jar</h2>
+<pre><code>macroengine-wand.jar
+├── fabric.mod.json                 ← what makes it a mod
+├── pack.mcmeta                     ← what makes it a datapack
+└── data/
+    ├── me_wand_module/
+    │   └── function/wand/...       ← the module's public surface
+    └── me_core_module/
+        └── tags/function/hook/
+            └── wand_tick.json      ← its claim on a seam</code></pre>
+
+<p>That last file is the whole integration. It is not code that runs; it is a
+   declaration that this module should be in the
+   <code>wand_tick</code> tag. The core never learns the module's name.</p>
+
+<h2>Where to go next</h2>
+<table>
+  <thead><tr><th>Read</th><th>For</th></tr></thead>
+  <tbody>
+    <tr><td><a href="architecture.html">Architecture</a></td>
+        <td>The 22 slots, what the core owns, why removal works</td></tr>
+    <tr><td><a href="modules.html">Modules</a></td>
+        <td>All 33, their mod ids and what each one is for</td></tr>
+    <tr><td><a href="reference.html">Command reference</a></td>
+        <td>Every command, grouped by module</td></tr>
+    <tr><td><a href="../docs/api.html">API</a></td>
+        <td>The contract for writing a new module</td></tr>
+    <tr><td><a href="../docs/versions.html">Versions</a></td>
+        <td>Pack formats and what each Minecraft release expects</td></tr>
+  </tbody>
+</table>
+
+<h2>What it does not do</h2>
+<ul>
+  <li><strong>No client-side anything.</strong> <code>environment: "*"</code> is
+      set so the pack loads in single-player, not because there is a HUD.</li>
+  <li><strong>No persistence beyond scoreboards.</strong> State lives in
+      scoreboard objectives, which means it lives in the world save and nowhere
+      else.</li>
+  <li><strong>No config GUI.</strong> Configuration is a
+      <code>function</code> call.</li>
+  <li><strong>No cross-version support.</strong> One Minecraft release at a
+      time.</li>
+</ul>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

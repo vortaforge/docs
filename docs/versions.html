@@ -3,140 +3,293 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Version matrix — VortaForge Docs</title>
-<meta name="description" content="Which Minecraft, Fabric loader and Loom version each VortaForge project targets, plus the rules that keep them consistent.">
+<title>Version matrix &mdash; VortaForge documentation</title>
+<meta name="description" content="Which VortaForge build targets which Minecraft version, and the pack format of every archived pack.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:900px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); }
-  h3 { font-size:1.04rem; margin:24px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html" class="here">API</a><a href="../docs/versions.html" class="here">Versions</a><a href="../docs/php.html" class="here">PHP</a><a href="../docs/warnings.html" class="here">Warnings</a><a href="../docs/archive.html" class="here">Archive</a><a href="../docs/maintainers.html" class="here">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="api.html">Docs</a> / Versions</p>
+<div class="hero">
   <h1>Version matrix</h1>
-  <p class="sub">What each project targets, and the rules that stop the numbers drifting.</p>
+  <p class="lede">Which build targets which Minecraft version, and which pack
+     format each archived pack was written for.</p>
+</div>
 
-  <h2 id="live">Live projects</h2>
-  <table>
-    <thead><tr><th>Project</th><th>Minecraft</th><th>Loader</th><th>Loom</th></tr></thead>
-    <tbody>
-      <tr><td><code>afk-manager</code></td><td>26.1.x</td><td>0.16.14</td><td>1.15.5</td></tr>
-      <tr><td><code>join-throttle</code></td><td>26.1.x</td><td>0.16.14</td><td>1.15.5</td></tr>
-      <tr><td><code>TEMPLATE-MOD</code></td><td>26.1.2</td><td>0.19.2</td><td>1.15.5</td></tr>
-      <tr><td><code>macroengine-core</code> and the 28 modules</td><td>26.3</td>
-          <td>0.20.1</td><td>n/a (no mixins)</td></tr>
-    </tbody>
-  </table>
+<div class="banner">
+  <strong>Only the current row is supported.</strong> Everything else on this
+  page is an archived pack. It is listed so a version question has an answer,
+  not so that installing it is a good idea.
+</div>
 
-  <div class="note">
-    <strong>Why Loom stays at 1.15.5.</strong> Current stable Fabric Loom is 1.19.3.
-    This project deliberately does not follow it: Loom is pinned to the version that
-    matches the Minecraft targets of the mods, so the build tool and the game do not
-    drift apart. Bumping it is a support-matrix decision, not a routine upgrade.
-  </div>
+<h2>Current</h2>
+<table>
+  <thead><tr><th>What</th><th>Minecraft</th><th>Runtime</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>macroEngine core + 33 modules</td><td>26.3</td>
+        <td>Fabric Loader 0.20.1, Java 25, no mixins</td>
+        <td><span class="yes">supported</span></td></tr>
+    <tr><td>afk-manager</td><td>26.3</td>
+        <td>Fabric Loader 0.20.1, Java 25, no Fabric API</td>
+        <td><span class="yes">supported</span></td></tr>
+    <tr><td>join-throttle</td><td>26.3</td>
+        <td>Fabric Loader 0.20.1, Java 25, one mixin</td>
+        <td><span class="yes">supported</span></td></tr>
+  </tbody>
+</table>
 
-  <h2 id="rules">The rules</h2>
-  <ul>
-    <li><strong>No <code>-SNAPSHOT</code>.</strong> A template mod is auto-discovered
-        by <code>settings.gradle</code> like any other subproject, so a snapshot
-        version there means CI resolves an unpinned build tool: the same commit could
-        build against different Loom code tomorrow.</li>
-    <li><strong>No <code>+</code> build metadata</strong> in pinned versions. A
-        <code>+</code> suffix makes version comparison ambiguous.</li>
-    <li><strong>The template and the real mods agree.</strong> A scaffold that sits on
-        a different Loom line than the mods it exists to bootstrap is a trap.</li>
-    <li><strong>The doc is checked.</strong> <code>docs/VERSION_MATRIX.md</code> in
-        <code>core</code> is parsed by a test against the real build files, so editing
-        one without the other fails the suite.</li>
-  </ul>
+<p>Java 25 is not a preference. Mojang's version metadata for 26.3 names major
+   version 25, and the runtime refuses an older JVM at startup rather than
+   failing somewhere confusing later.</p>
 
-  <h2 id="archived">Archived datapacks</h2>
-  <p>Listed for reference only. Data pack formats and resource pack formats use
-     <em>separate</em> numbering series &mdash; the numbers below are the series each
-     pack's own <code>pack.mcmeta</code> declares.</p>
+<h2>The 34 module jars</h2>
+<p>macroEngine ships as one core jar and 33 module jars - 34 artifacts in total,
+   from <code>modules.json</code>. Every module declares
+   <code>macroengine-core</code> as a dependency and every one installs alone
+   next to the core; that is checked by a test, not assumed. They are Fabric mods
+   that also work as plain data packs, at pack format <code>121.0</code>.</p>
 
-  <table>
-    <thead><tr><th>Pack</th><th>Format</th><th>Roughly</th><th>Clickable warning?</th></tr></thead>
-    <tbody>
-      <tr><td><code>macroEngine-Datapack-v26.3</code></td><td>121.0</td><td>26.3</td><td>Yes</td></tr>
-      <tr><td>the 29 macroEngine module jars</td><td>121.0</td><td>26.3</td><td>n/a (no warning)</td></tr>
-      <tr><td><code>DailyBonus</code></td><td>121.0</td><td>26.3</td><td>Yes</td></tr>
-      <tr><td><code>QuickShare</code></td><td>121.0</td><td>26.3</td><td>Yes</td></tr>
-      <tr><td><code>RTWrapper-v1.0.1</code></td><td>121.0</td><td>26.3</td><td>Yes</td></tr>
-      <tr><td><code>InteractionClickDetection</code></td><td>26</td><td>&leq; 1.20.4</td><td>No</td></tr>
-      <tr><td><code>guikitfw</code></td><td>121</td><td>26.3</td><td>Yes</td></tr>
-      <tr><td><code>LeftClickDetection</code></td><td>41</td><td>1.20.5&ndash;1.20.6</td><td>No</td></tr>
-      <tr><td><code>cmdTunnel-datapack</code></td><td>12</td><td>1.19.4</td><td>No</td></tr>
-      <tr><td><code>TunnelScript</code></td><td>10</td><td>1.19&ndash;1.19.3</td><td>No</td></tr>
-      <tr><td><code>vf_macro</code></td><td>6</td><td>1.16.2&ndash;1.16.5</td><td>No</td></tr>
-      <tr><td><code>macroEngine-Resourcepack-v26.3</code></td><td>97.1 (resource)</td><td>26.3</td><td>n/a (no code)</td></tr>
-    </tbody>
-  </table>
+<table>
+  <thead><tr><th>Artifact</th><th>Pack format</th><th>Installable alone</th></tr></thead>
+  <tbody>
+    <tr><td>core</td><td>121.0</td><td>yes - it is the base</td></tr>
+    <tr><td>each of the 33 modules</td><td>121.0</td>
+        <td><span class="yes">yes</span> (verified 34/34)</td></tr>
+  </tbody>
+</table>
 
-  <div class="warnbox">
-    <strong>&ldquo;Clickable warning?&rdquo; is a hard constraint, not a preference.</strong>
-    <code>click_event</code> exists from 1.21.5 (data format 71). A pack targeting
-    format 41 or lower cannot render one, and writing the new syntax into it would
-    break the pack on the version it was written for. Those packs carry a plain-text
-    warning with the URL spelled out instead. See
-    <a href="warnings.html#version">why some packs cannot show the warning</a>.
-  </div>
+<h2>Archived packs</h2>
+<p>A two-part pack format (<code>121.0</code>) is the 26.x format, which carries
+   a minor number. Single numbers predate it. A pack whose format is well below
+   the one your server expects will not load without being rewritten - the
+   version column is what it was written against, not a compatibility claim.</p>
 
-  <h2 id="formats">Pack format quick reference</h2>
-  <table>
-    <thead><tr><th>Minecraft</th><th>Data pack format</th><th>Resource pack format</th></tr></thead>
-    <tbody>
-      <tr><td>26.3</td><td>121.0</td><td>97.1</td></tr>
-      <tr><td>26.1 &ndash; 26.1.2</td><td>101.1</td><td>84.0</td></tr>
-      <tr><td>1.21.9 &ndash; 1.21.10</td><td>88.0</td><td>69.0</td></tr>
-      <tr><td>1.21.5</td><td>71</td><td>55</td></tr>
-      <tr><td>1.21.4</td><td>61</td><td>46</td></tr>
-      <tr><td>1.21 &ndash; 1.21.1</td><td>48</td><td>34</td></tr>
-      <tr><td>1.20.5 &ndash; 1.20.6</td><td>41</td><td>32</td></tr>
-      <tr><td>1.19.4</td><td>12</td><td>13</td></tr>
-      <tr><td>1.16.2 &ndash; 1.16.5</td><td>6</td><td>6</td></tr>
-    </tbody>
-  </table>
+<table>
+  <thead><tr><th>Pack</th><th>Minecraft</th><th>Pack format</th><th>Status</th></tr></thead>
+  <tbody>
+        <tr><td><code>cmdTunnel-datapack</code></td><td>1.19.3-1.19.4</td><td>12</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>DailyBonus</code></td><td>Minecraft 26.x</td><td>[121, 0]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>guikitfw</code></td><td>Minecraft 26.x</td><td>121</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>InteractionClickDetection</code></td><td>1.20.x</td><td>26</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>LeftClickDetection</code></td><td>1.20.5-1.21.x</td><td>41</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>macroEngine-Datapack-v26.3</code></td><td>26.3</td><td>[121, 0]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>macroEngine-Resourcepack-v26.3</code></td><td>26.3</td><td>[97, 1]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>QuickShare</code></td><td>Minecraft 26.x</td><td>[121, 0]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>RTWrapper</code></td><td>26.3</td><td>[107, 1]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>RTWrapper-v1.0.1</code></td><td>26.3</td><td>[121, 0]</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>TunnelScript</code></td><td>1.19.2</td><td>10</td><td><span class="no">archived</span></td></tr>
+        <tr><td><code>vf_macro</code></td><td>1.16-1.20</td><td>6</td><td><span class="no">archived</span></td></tr>
+  </tbody>
+</table>
 
-  <p>Since 1.21.9 / 25w31a, packs declare a <code>min_format</code> and
-     <code>max_format</code> range instead of a single <code>pack_format</code>, and
-     the number carries a minor part that rises for non-breaking changes. For data
-     packs the <code>pack_format</code> key is only still needed if the pack also
-     supports a format below 82.</p>
+<h2>Reading the pack format</h2>
+<table>
+  <thead><tr><th>Format</th><th>Minecraft</th></tr></thead>
+  <tbody>
+    <tr><td><code>6</code></td><td>1.16</td></tr>
+    <tr><td><code>10</code></td><td>1.19.2</td></tr>
+    <tr><td><code>12</code></td><td>1.19.3 - 1.19.4</td></tr>
+    <tr><td><code>26</code></td><td>1.20.x</td></tr>
+    <tr><td><code>41</code></td><td>1.20.5 - 1.21.x</td></tr>
+    <tr><td><code>97.1</code></td><td>26.3 resource pack (<code>[97, 1]</code>)</td></tr>
+    <tr><td><code>107.1</code></td><td>26.3 (nested container)</td></tr>
+    <tr><td><code>121.0</code></td><td>26.3 datapack</td></tr>
+  </tbody>
+</table>
 
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="api.html">API reference</a> &middot;
-    <a href="warnings.html">pack warnings</a>
-  </footer>
+<p>The jump from <code>41</code> to <code>97</code> is not a missing row: the
+   format numbering restarted its scheme when Minecraft's versioning changed.
+   That is also why 26.x formats carry two parts.</p>
+
+<h2>If a pack does not load</h2>
+<p>The usual cause is the pack format, not the content. Change
+   <code>pack_format</code> in <code>pack.mcmeta</code> to the number your server
+   expects and it will usually load, because the function syntax changed far less
+   than the number suggests. It is still an archived pack - loading is not the
+   same as working, and <a href="warnings.html">the warning</a> is there for a
+   reason.</p>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

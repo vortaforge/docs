@@ -3,358 +3,345 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Archive register — VortaForge Docs</title>
-<meta name="description" content="Every archived VortaForge project, its status, whether it is disarmed, and why it was archived.">
+<title>Archive &mdash; VortaForge documentation</title>
+<meta name="description" content="All 32 retired VortaForge projects: last version, target Minecraft release, and the reason each was archived.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); letter-spacing:-0.01em; }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  td code { white-space:nowrap; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
 
-  .no { color:var(--warn); font-weight:600; }
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Archive register</h1>
-  <p class="sub">Generated from <code>archived/archive.json</code> in
-     <code>vortaforge/core</code> &mdash; 32 registered projects,
-     11 of them datapacks. Every one is disarmed.</p>
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html" class="here">API</a><a href="../docs/versions.html" class="here">Versions</a><a href="../docs/php.html" class="here">PHP</a><a href="../docs/warnings.html" class="here">Warnings</a><a href="../docs/archive.html" class="here">Archive</a><a href="../docs/maintainers.html" class="here">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="archive.html">Archive</a></p>
+<div class="hero">
+  <h1>Archive</h1>
+  <p class="lede">Every project VortaForge has retired, with its last version,
+     the Minecraft release it targeted and the reason it stopped.</p>
+</div>
 
-  <div class="warnbox">
-    <strong>Nothing here is supported.</strong>
-    These are frozen history. See <a href="warnings.html">pack warnings</a> for what
-    that means in practice.
-  </div>
+<div class="banner">
+  <strong>32 projects are registered here and all of them are
+  retired.</strong> 11 datapacks, one resource pack,
+  16 scripts and 1 mod form the rest.
+  This page exists so that "what happened to X" has an answer, not so that X is
+  worth installing.
+</div>
 
-  <h2>All registered projects</h2>
-  <table>
-    <thead><tr><th>Id</th><th>Kind</th><th>Status</th><th>Last version</th><th>Disarmed</th><th>Deploy</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><code>cmdtunnel-datapack</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>main@2026-10-26</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>dailybonus</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>guikitfw</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>main@2026-11-02</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>interaction-click-detection</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>1.0.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>left-click-detection</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>1.0.1</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>macroengine-datapack</code><br>
-            <span style="font-size:13px;color:var(--muted)">superseded &mdash;
-            rebuilt as <a href="../macroengine/index.html">29 Fabric mods</a></span></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>26.3</td>
-        <td><span class="no">yes</span></td>
-        <td>rebuilt</td>
-      </tr>
-      <tr>
-        <td><code>quickshare</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>main@2026-10-31</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>rtwrapper</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>26.3</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>rtwrapper-1-0-1</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>1.0.1</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>tunnelscript</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>1.1.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>vf-macro</code></td>
-        <td>datapack</td>
-        <td>archived</td>
-        <td>1.9.1</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>datapack-blocker-mod</code></td>
-        <td>mod</td>
-        <td>archived</td>
-        <td>1.1.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>dynamic-command-gate-doc</code></td>
-        <td>other</td>
-        <td>archived</td>
-        <td>main@2026-10-29</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>static-analysis-findings</code></td>
-        <td>other</td>
-        <td>archived</td>
-        <td>main@2026-10-30</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>template-datapack</code></td>
-        <td>other</td>
-        <td>archived</td>
-        <td>main@2026-10-16</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>macroengine-resourcepack</code></td>
-        <td>resourcepack</td>
-        <td>archived</td>
-        <td>26.3</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-check-packs</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-merge-datapacks</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-origin-watermark-helpers</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-pack-packaging-helpers</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-pack-validation-helpers</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-release</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-site-data-php</code></td>
-        <td>script</td>
-        <td>superseded</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>build-zip-packs</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>datapack-lint</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>1.0.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>dpgen</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>1.0.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>fix-text-components</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>n/a</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>gui-generator</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>0.0.0</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>lint-datapacks-sh</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-10-30</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>patches-gh</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-11-05</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>remove-handover</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>n/a</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-      <tr>
-        <td><code>ward</code></td>
-        <td>script</td>
-        <td>archived</td>
-        <td>main@2026-10-29</td>
-        <td><span class="no">yes</span></td>
-        <td>not_recommended</td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="note">
-    <strong><code>macroengine-datapack</code> is archived but not abandoned.</strong>
-    It was split into a core and 28 modules, each packaged as a Fabric mod that also
-    works as a plain data pack. The archived entry stays because the original single
-    pack still exists and still warns when loaded &mdash; see
-    <a href="warnings.html">pack warnings</a>. The replacement is documented at
-    <a href="../macroengine/index.html">macroEngine</a>.
-  </div>
+<h2>The rule behind the table</h2>
+<p>Retirement is recorded, not deleted. Deleting a project removes the only
+   evidence that it existed, which makes an old world's missing
+   <code>scoreboard</code> holder impossible to explain a year later. So each
+   project gets a row: what it was, what it targeted, and what replaced it if
+   anything did.</p>
 
+<p>Two consequences worth stating plainly:</p>
+<ul>
+  <li><strong>Archived does not mean broken.</strong> Several of these still
+      load on the version they targeted. They are unsupported, which is a
+      different claim.</li>
+  <li><strong>A row is not a recommendation.</strong> The
+      <code>reason</code> field is the interesting one, and it is almost never
+      "it was bad" - usually the Minecraft feature it patched around shipped
+      natively, or the mod superseded it.</li>
+</ul>
 
-  <h2>Why they were archived</h2>
-  <p>The reasons are recorded per project. The recurring ones are worth naming
-     plainly, because they are the actual argument rather than a shrug:</p>
-  <ul>
-    <li><strong>Datapacks have no type safety.</strong> Every value crossing a
-        function call, storage read, scoreboard comparison or macro expansion is an
-        untyped string, checked by nothing at load time or run time.</li>
-    <li><strong>They have no enforced security model.</strong> Dynamic command
-        execution runs at function permission level with no authentication boundary
-        a user can verify.</li>
-    <li><strong>There is no debugging or inspection tooling</strong> beyond hand-written
-        <code>tellraw</code>, and malformed references fail silently or at runtime
-        rather than at build time.</li>
-    <li><strong>The maintainer hit these problems as a plain datapack user</strong>,
-        without installing any client mod.</li>
-  </ul>
+<h2>All 32 registered projects</h2>
+<p>Grouped by kind. Ids are stable and match <code>archive.json</code>; the
+   links from <a href="../datapacks/index.html">Datapacks</a> anchor to the row
+   ids below.</p>
 
-  <h2>What replaced them</h2>
-  <p>Two Fabric mods, because the problems above are language problems that a
-     datapack cannot solve from inside a datapack: <code>afk-manager</code> and
-     <code>join-throttle</code>. Both are typed, tested and built by Gradle. See the
-     <a href="../mods/">mod guides</a>.</p>
+<h3>Datapacks <span class="pill">11</span></h3>
+<table>
+  <thead><tr><th>Id</th><th>Last version</th><th>Minecraft</th><th>License</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td id="cmdtunnel-datapack"><code>cmdtunnel-datapack</code></td><td>main@2026-10-26</td><td>1.19.3-1.19.4</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="dailybonus"><code>dailybonus</code></td><td>main@2026-11-05</td><td>Minecraft 26.x</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="guikitfw"><code>guikitfw</code></td><td>main@2026-11-02</td><td>Minecraft 26.x</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="interaction-click-detection"><code>interaction-click-detection</code></td><td>1.0.0</td><td>1.20.x</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="left-click-detection"><code>left-click-detection</code></td><td>1.0.1</td><td>1.20.5-1.21.x</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="macroengine-datapack"><code>macroengine-datapack</code></td><td>26.3</td><td>26.3</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="quickshare"><code>quickshare</code></td><td>main@2026-10-31</td><td>Minecraft 26.x</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="rtwrapper"><code>rtwrapper</code></td><td>26.3</td><td>26.3</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="rtwrapper-1-0-1"><code>rtwrapper-1-0-1</code></td><td>1.0.1</td><td>26.3</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="tunnelscript"><code>tunnelscript</code></td><td>1.1.0</td><td>1.19.2</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="vf-macro"><code>vf-macro</code></td><td>1.9.1</td><td>1.16-1.20</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+  </tbody>
+</table>
 
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="maintainers.html">maintainer guide</a>
-  </footer>
+<h3>Resource pack <span class="pill">1</span></h3>
+<table>
+  <thead><tr><th>Id</th><th>Last version</th><th>Minecraft</th><th>License</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td id="macroengine-resourcepack"><code>macroengine-resourcepack</code></td><td>26.3</td><td>26.3</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+  </tbody>
+</table>
+
+<h3>Scripts / tooling <span class="pill">16</span></h3>
+<table>
+  <thead><tr><th>Id</th><th>Last version</th><th>Minecraft</th><th>License</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td id="build-check-packs"><code>build-check-packs</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-merge-datapacks"><code>build-merge-datapacks</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-origin-watermark-helpers"><code>build-origin-watermark-helpers</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-pack-packaging-helpers"><code>build-pack-packaging-helpers</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-pack-validation-helpers"><code>build-pack-validation-helpers</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-release"><code>build-release</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="build-site-data-php"><code>build-site-data-php</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>superseded</td></tr>
+    <tr><td id="build-zip-packs"><code>build-zip-packs</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="datapack-lint"><code>datapack-lint</code></td><td>1.0.0</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="dpgen"><code>dpgen</code></td><td>1.0.0</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="fix-text-components"><code>fix-text-components</code></td><td>n/a</td><td>&mdash;</td><td>Unlicense (repository LICENSE)</td><td>archived</td></tr>
+    <tr><td id="gui-generator"><code>gui-generator</code></td><td>0.0.0</td><td>&mdash;</td><td>Unlicense (package LICENSE)</td><td>archived</td></tr>
+    <tr><td id="lint-datapacks-sh"><code>lint-datapacks-sh</code></td><td>main@2026-10-30</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="patches-gh"><code>patches-gh</code></td><td>main@2026-11-05</td><td>&mdash;</td><td>Unlicense</td><td>archived</td></tr>
+    <tr><td id="remove-handover"><code>remove-handover</code></td><td>n/a</td><td>&mdash;</td><td>Unlicense (repository LICENSE)</td><td>archived</td></tr>
+    <tr><td id="ward"><code>ward</code></td><td>main@2026-10-29</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+  </tbody>
+</table>
+
+<h3>Mods <span class="pill">1</span></h3>
+<table>
+  <thead><tr><th>Id</th><th>Last version</th><th>Minecraft</th><th>License</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td id="datapack-blocker-mod"><code>datapack-blocker-mod</code></td><td>1.1.0</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+  </tbody>
+</table>
+
+<h3>Other <span class="pill">3</span></h3>
+<table>
+  <thead><tr><th>Id</th><th>Last version</th><th>Minecraft</th><th>License</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td id="dynamic-command-gate-doc"><code>dynamic-command-gate-doc</code></td><td>main@2026-10-29</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="static-analysis-findings"><code>static-analysis-findings</code></td><td>main@2026-10-30</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+    <tr><td id="template-datapack"><code>template-datapack</code></td><td>main@2026-10-16</td><td>&mdash;</td><td>Unlicense (pack LICENSE)</td><td>archived</td></tr>
+  </tbody>
+</table>
+
+<h2>Why things were archived</h2>
+<table>
+  <thead><tr><th>Reason</th><th>What it means</th><th>Typical case</th></tr></thead>
+  <tbody>
+    <tr><td>Superseded by a mod</td>
+        <td>A Fabric mod now does the same job with less maintenance, because a
+            mod is not re-tested against every datapack format change.</td>
+        <td>macroEngine the datapack &rarr; macroEngine the 34-module mod set</td></tr>
+    <tr><td>Vanilla absorbed it</td>
+        <td>Minecraft shipped the feature, so the workaround became a smaller,
+            worse version of the thing itself.</td>
+        <td>A pack that emulated a game rule the release then added</td></tr>
+    <tr><td>Retired with its host</td>
+        <td>The pack only made sense alongside another pack. Both stop, or the
+            supported half becomes unreachable.</td>
+        <td>macroEngine's resource pack (i18n, sounds, trim assets)</td></tr>
+    <tr><td>Never a deliverable</td>
+        <td>A test harness, a generator or a one-off that was useful during
+            development and has no user.</td>
+        <td>Scripts and tooling in the rows above</td></tr>
+  </tbody>
+</table>
+
+<h2>What replaced them</h2>
+<table>
+  <thead><tr><th>Retired</th><th>Successor</th><th>Difference that mattered</th></tr></thead>
+  <tbody>
+    <tr><td>macroEngine-Datapack</td><td>macroEngine, 34 module jars</td>
+        <td>Was one monolithic pack; now one core plus 33 modules where any
+            module can be absent without breaking load or tick.</td></tr>
+    <tr><td>RTWrapper, RTWrapper-v1.0.1</td><td>&mdash;</td>
+        <td>Both were <strong>fully removed</strong>, not deprecated. The
+            wrappers gated the engine at runtime; the gates were a defect and
+            the modules absorbed the work.</td></tr>
+    <tr><td>DailyBonus, QuickShare, guikitfw</td><td>&mdash;</td>
+        <td>Stood alone. Nothing replaced them, and nothing needs to.</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>The table is generated from <code>archive.json</code>, not typed by
+  hand.</strong> 32 projects, 19 fields each. If a row here disagrees
+  with the JSON, the JSON is right - and
+  <a href="php.html">the build tooling</a> reads it the same way this page was
+  written.
+</div>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

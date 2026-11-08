@@ -3,177 +3,366 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Architecture &mdash; VortaForge Docs</title>
-<meta name="description" content="How macroEngine is split: the core/module rule, hook slots, event extension points, and the checks that enforce them.">
+<title>Architecture &mdash; VortaForge documentation</title>
+<meta name="description" content="How macroEngine keeps 33 module packs independent: the 22 hook slots, what the core owns, and why removal works.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html" class="here">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html">API</a><a href="../docs/versions.html">Versions</a><a href="../docs/php.html">PHP</a><a href="../docs/warnings.html">Warnings</a><a href="../docs/archive.html">Archive</a><a href="../docs/maintainers.html">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="index.html">macroEngine</a> / Architecture</p>
+<div class="hero">
   <h1>Architecture</h1>
-  <p class="sub">The rules the split is built on, and what enforces them.</p>
+  <p class="lede">One core pack, 33 module packs, 22 hook slots and no module
+     that knows another module exists. The last part is the design; everything
+     else follows from it.</p>
+</div>
 
-  <h2>The shape</h2>
-  <p>One core pack and 28 module packs. Every module declares
-     <code>macroengine-core</code> as a dependency. The core declares no module.</p>
+<h2>The shape</h2>
+<p>A datapack cannot call another datapack. There is no import, no dependency
+   resolution and no namespace that can see across a pack boundary. So a
+   modular engine cannot be built out of direct calls - the moment
+   <code>me_player_module</code> calls <code>me_perm_module</code>, the two stop
+   being independently installable.</p>
 
-  <pre><code>macroengine-core
-   ├── macroengine-cmd
-   ├── macroengine-player
-   ├── macroengine-perm
-   └── … 25 more, each depending only on core</code></pre>
+<p>macroEngine solves this the only way a datapack can: <strong>the core owns
+   every seam, and modules only ever touch a seam.</strong> A seam is a
+   <code>#tag</code> function tag. Modules add themselves to a tag; the core
+   runs the tag. Neither side names the other.</p>
 
-  <h2>Rule 1: no module depends on another module</h2>
-  <p>A module may call the core by fully-qualified id. It may not call a sibling.
-     The reason is not tidiness: it is the difference between a module you can
-     delete and one you cannot. Two packs that call each other can only be installed
-     together, and a user who installs one of them gets a pack that references ids
-     that do not exist.</p>
+<pre><code>core tick
+  └─ function #me_core_module:hook/wand_tick   ← the seam (a tag, note the #)
+       └─ me_wand_module:core/internal/wand/tick ← the module's entry</code></pre>
 
-  <p>Where one feature genuinely needs another, the call goes through a
-     <strong>hook slot</strong> the core owns.</p>
+<p>The module does not edit that tag. It ships a second file with the same tag
+   id in its own pack, marked <code>replace: false</code>, and the game unions
+   the two lists. Neither side names the other; both just declare the same tag.</p>
 
-  <h3>Hook slots</h3>
-  <p>The core defines an empty tag:</p>
-  <pre><code># me_core_module, tags/function/hook/events_fire.json
-{ "replace": false, "values": [] }</code></pre>
+<p>An empty tag is a valid tick, and every contributed value is marked
+   <code>required: false</code>. That is what makes a module removable: take the
+   jar out and the tag has one fewer entry, no load error, no dangling
+   reference. No module has to be told a sibling is gone, because no module was
+   ever told a sibling existed.</p>
 
-  <p>The implementing module writes the same tag id from its own pack, listing its
-     own function. The game merges them.</p>
-  <pre><code># me_events_module, same tag id
-{ "replace": false,
-  "values": [ { "id": "me_events_module:events/fire", "required": false } ] }</code></pre>
+<h2>The 22 hook slots</h2>
+<p>These are the entire public surface of the engine - 22 slots, each
+   one a function tag owned by the core. A module that needs to run code at a
+   particular moment adds itself to one of these and nothing else. The right
+   column shows which modules currently attach to each slot; empty slots are not
+   defects, they are extension points nobody has needed yet.</p>
 
-  <p>The caller names the slot, never the implementation:</p>
-  <pre><code># in the core
-function #me_core_module:hook/events_fire with storage macroengine:engine queue[0]</code></pre>
+<table>
+  <thead><tr><th>Slot</th><th>Tag</th><th>Provided by</th></tr></thead>
+  <tbody>
+    <tr><td><code>cb_tick</code></td><td><code>me_core_module:hook/cb_tick</code></td><td><code>cb</code></td></tr>
+    <tr><td><code>cmd_freeze_tick</code></td><td><code>me_core_module:hook/cmd_freeze_tick</code></td><td><code>cmd</code></td></tr>
+    <tr><td><code>config_apply</code></td><td><code>me_core_module:hook/config_apply</code></td><td><code>config</code></td></tr>
+    <tr><td><code>config_ensure</code></td><td><code>me_core_module:hook/config_ensure</code></td><td><code>config</code></td></tr>
+    <tr><td><code>config_init</code></td><td><code>me_core_module:hook/config_init</code></td><td><code>config</code></td></tr>
+    <tr><td><code>events_fire</code></td><td><code>me_core_module:hook/events_fire</code></td><td><code>events</code></td></tr>
+    <tr><td><code>hook_tick</code></td><td><code>me_core_module:hook/hook_tick</code></td><td><code>hook</code></td></tr>
+    <tr><td><code>interaction_tick</code></td><td><code>me_core_module:hook/interaction_tick</code></td><td><code>interaction</code></td></tr>
+    <tr><td><code>load</code></td><td><code>me_core_module:hook/load</code></td><td><span class="no">nothing</span></td></tr>
+    <tr><td><code>perm_require</code></td><td><code>me_core_module:hook/perm_require</code></td><td><code>perm</code></td></tr>
+    <tr><td><code>perm_tick</code></td><td><code>me_core_module:hook/perm_tick</code></td><td><code>perm</code></td></tr>
+    <tr><td><code>player_enumerate</code></td><td><code>me_core_module:hook/player_enumerate</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_get_name</code></td><td><code>me_core_module:hook/player_get_name</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_init</code></td><td><code>me_core_module:hook/player_init</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_init_from_name</code></td><td><code>me_core_module:hook/player_init_from_name</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_init_online</code></td><td><code>me_core_module:hook/player_init_online</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_resolve</code></td><td><code>me_core_module:hook/player_resolve</code></td><td><code>player</code></td></tr>
+    <tr><td><code>player_tick</code></td><td><code>me_core_module:hook/player_tick</code></td><td><span class="no">nothing</span></td></tr>
+    <tr><td><code>queue_process</code></td><td><code>me_core_module:hook/queue_process</code></td><td><code>lib</code></td></tr>
+    <tr><td><code>tick</code></td><td><code>me_core_module:hook/tick</code></td><td><span class="no">nothing</span></td></tr>
+    <tr><td><code>trigger_dispatch</code></td><td><code>me_core_module:hook/trigger_dispatch</code></td><td><code>trigger</code></td></tr>
+    <tr><td><code>wand_tick</code></td><td><code>me_core_module:hook/wand_tick</code></td><td><code>wand</code></td></tr>
+  </tbody>
+</table>
 
-  <p>With the events module installed the queue drains. Without it the slot is empty
-     and the queue fills &mdash; which is what &ldquo;the event module is not
-     installed&rdquo; should mean. Neither case is an error.</p>
+<h2>Two kinds of slot</h2>
+<p>Twenty of the 22 slots are fire-and-forget: the core runs the tag and does not
+   read anything back. Those are cheap to extend, because a module can add
+   itself without agreeing with anyone about anything.</p>
 
-  <div class="note">
-    <strong><code>with storage …</code> survives the rewrite.</strong> The arguments
-    after the id are not touched, so a slot call keeps its payload. The same holds
-    for the arguments on a plain function call.
-  </div>
+<p>Two slots return a value - <code>perm_require</code> and
+   <code>player_get_name</code> - and those are the only places where two
+   modules must agree on a contract. A query slot answers into a scoreboard
+   holder that the caller then reads, so the holder name, the encoding and the
+   "no answer" representation are all part of the seam.</p>
 
-  <h2>Rule 2: the core does not name a module</h2>
-  <p>The consequence of rule 1, stated from the core&rsquo;s side. If the core calls
-     <code>me_events_module:events/fire</code> directly, the events module is no
-     longer optional, whatever the manifest says.</p>
+<table>
+  <thead><tr><th>Kind</th><th>Count</th><th>Cost to extend</th><th>Slots</th></tr></thead>
+  <tbody>
+    <tr><td>Side-effect</td><td>20</td>
+        <td>Add yourself to the tag. Nothing else.</td>
+        <td>all the rest</td></tr>
+    <tr><td>Query (returns a value)</td><td>2</td>
+        <td>Add yourself <em>and</em> honour the scoreboard contract the caller
+            reads.</td>
+        <td><code>perm_require</code>, <code>player_get_name</code></td></tr>
+  </tbody>
+</table>
 
-  <h2>Rule 3: core holds the engine, not a toolbox</h2>
-  <p>The core contains the internals, the gates, load and tick, and the kernel
-     services the engine calls at boot: <code>math</code>, <code>rng</code>,
-     <code>log</code>, <code>string</code>, <code>color</code>,
-     <code>validate</code>. A pack the engine cannot boot without is part of the
-     engine.</p>
+<p>Keeping that ratio at 20:2 is the reason the module set is extensible. Every
+   new query slot is a new contract that every future module must be written
+   against; a new side-effect slot costs nothing.</p>
 
-  <p>The same test sends features the other way. <code>systems/text</code> and
-     <code>systems/geo</code> were in core and are now modules, because nothing in
-     the engine called them &mdash; they were a general-purpose toolbox sitting in
-     the kernel.</p>
+<h2>Where the files are</h2>
+<p>1,529 functions across 34 packs. The distribution is lopsided on purpose: the
+   core carries the dispatcher, the queue, state, config and the kernel services,
+   so it is expected to be the largest pack by a wide margin. A module that
+   grows past the core is a sign the split is wrong.</p>
 
-  <h2>Rule 4: a tag may not require another module</h2>
-  <p>A tag in one pack that lists another pack&rsquo;s function has to mark that value
-     optional:</p>
-  <pre><code>{ "id": "me_input_module:input/anvil", "required": false }</code></pre>
-  <p>As a plain string, the game fails the tag when the other module is absent.
-     <code>me_core_module:loop</code> did exactly that with four <code>input</code>
-     functions. Naming the core itself is fine: the core is never absent.</p>
+<table>
+  <thead><tr><th>Module</th><th>Mod id</th><th>Functions</th></tr></thead>
+  <tbody>
+    <tr><td><code>core</code></td><td><code>macroengine-core</code></td><td>911</td></tr>
+    <tr><td><code>cmd</code></td><td><code>macroengine-cmd</code></td><td>123</td></tr>
+    <tr><td><code>player</code></td><td><code>macroengine-player</code></td><td>58</td></tr>
+    <tr><td><code>lib</code></td><td><code>macroengine-lib</code></td><td>53</td></tr>
+    <tr><td><code>input</code></td><td><code>macroengine-input</code></td><td>41</td></tr>
+    <tr><td><code>hook</code></td><td><code>macroengine-hook</code></td><td>40</td></tr>
+    <tr><td><code>store</code></td><td><code>macroengine-store</code></td><td>32</td></tr>
+    <tr><td><code>world</code></td><td><code>macroengine-world</code></td><td>27</td></tr>
+    <tr><td><code>toggle</code></td><td><code>macroengine-toggle</code></td><td>25</td></tr>
+    <tr><td><code>perm</code></td><td><code>macroengine-perm</code></td><td>20</td></tr>
+  </tbody>
+</table>
 
-  <h2>What enforces this</h2>
-  <p>Four checks, all in CI. Each exists because its rule was broken at least once.</p>
+<p>Every module declares <code>me_core_module</code> as a hard requirement; the
+   core declares nothing. There is no second-level dependency in the graph -
+   <code>me_perm_module</code> does not require <code>me_player_module</code>
+   even though it operates on players. It reaches the player API through a hook,
+   which is the same mechanism it would use if the player module were not
+   installed at all.</p>
 
-  <table>
-    <thead><tr><th>Check</th><th>What it proves</th></tr></thead>
-    <tbody>
-      <tr><td><code>verify.py</code></td>
-          <td>Every reference resolves, no module reaches another&rsquo;s internals,
-              the core names no module, no foreign-module tag value is mandatory, and
-              the dependency graph is acyclic.</td></tr>
-      <tr><td><code>check_refs.py</code></td>
-          <td>Every <code>namespace:path</code> token in every pack exists. Catches an
-              id the split failed to rename, which is otherwise found only when the
-              game refuses the pack.</td></tr>
-      <tr><td><code>test_module_removal.py</code></td>
-          <td>Deletes each module in turn and re-verifies the rest &mdash; 29/29. This
-              is the claim the split exists for, tested rather than asserted.</td></tr>
-      <tr><td><code>test_check_refs.py</code></td>
-          <td>Breaks the output in each id shape that has broken a real server, and
-              asserts <code>check_refs</code> reports it. A checker that has never
-              failed is not evidence.</td></tr>
-    </tbody>
-  </table>
+<h2>What the core owns</h2>
+<ul>
+  <li><strong>Dispatch</strong> - the entry point every command and tick passes
+      through.</li>
+  <li><strong>The deferred queue</strong> - work that must happen after the
+      current function returns, since a function cannot re-enter itself.</li>
+  <li><strong>State and config</strong> - the scoreboard-backed storage every
+      module reads and writes.</li>
+  <li><strong>Load and tick</strong> - the two function tags Minecraft itself
+      calls, wired to the slots above.</li>
+  <li><strong>Kernel services</strong> - <code>math</code>, <code>rng</code>,
+      <code>log</code>, <code>string</code>, <code>color</code>,
+      <code>validate</code>. Small, stateless, and duplicated nowhere.</li>
+  <li><strong>Every extension point</strong> - the 22 slots. A module may not
+      invent one.</li>
+</ul>
 
-  <div class="warnbox">
-    <strong>Why so much checking.</strong> Every defect below shipped in a release and
-    was found by booting a server and reading the log, not by a test:
-    an entry point that did not implement <code>ModInitializer</code> and stopped the
-    whole server; a dialog id that made the registry refuse to load;
-    <code>execute if predicate</code> and <code>dialog show</code> ids left pointing
-    at a namespace that no longer existed; an SNBT <code>{func:"…"}</code> payload
-    that silently never ran. Each is now a test.
-  </div>
+<h2>What a module owns</h2>
+<p>Its own namespace, its own functions, its own config keys, and its own
+   membership in the tags it needs. Nothing else. A module may not:</p>
+<ul>
+  <li>define a hook slot (<code>tools/test_module_removal.py</code> enforces
+      it),</li>
+  <li>ship a <code>core/internal/</code> tree,</li>
+  <li>call another module's functions - the namespace is not visible across
+      packs anyway, so this fails at build rather than at runtime,</li>
+  <li>assume a sibling is installed. If <code>me_player_module</code> is absent,
+      <code>me_perm_module</code> still loads and simply has no players to
+      resolve.</li>
+</ul>
 
-  <h2>The data pack layout</h2>
-  <p>Each module is a complete data pack: its own <code>pack.mcmeta</code>, its own
-     namespace, and no dependency on another pack&rsquo;s files. The jar root holds
-     exactly what the game expects, so the same file works in <code>mods/</code> and
-     in <code>datapacks/</code>.</p>
+<h2>Why this survives removal</h2>
+<p>The test is not "does it load without the module". It is "does the engine
+   still tick when the module was never there". The difference matters: a
+   missing tag entry is invisible, while a missing function call is a silent
+   no-op that Minecraft reports as an error in the log and otherwise ignores.</p>
 
-  <p>Cross-pack references are the one thing that is not free. Every
-     <code>me_&lt;module&gt;_module:</code> id inside a module must point at the core
-     or be a tag value, and both are checked.</p>
+<p>All 34 packs pass the removal test individually. That is 34 builds, each with
+   exactly one pack absent, checking that load and tick still complete.</p>
 
-  <h2>The tick and load spine</h2>
-  <p>Exactly two entry points, both in the core, both vanilla function tags:</p>
-  <ul>
-    <li><code>#minecraft:load</code> &mdash; runs the load gate, then initialises
-        scoreboards, storages and player state.</li>
-    <li><code>#minecraft:tick</code> &mdash; drives the scheduler, then calls the
-        per-feature tick slots. Each feature attaches through
-        <code>#me_core_module:hook/&lt;feature&gt;_tick</code>, so a module that is not
-        installed simply contributes nothing to the tick.</li>
-  </ul>
-
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="index.html">macroEngine</a> &middot;
-    <a href="modules.html">module list</a> &middot;
-    <a href="reference.html">function reference</a>
-  </footer>
+<div class="note">
+  <strong>The rule that keeps it honest:</strong> feature code never lands in
+  core. Core grows only when a new seam is genuinely needed by more than one
+  module - and a seam added for one module is a sign that module should own the
+  work instead.
+</div>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

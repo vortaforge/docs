@@ -3,142 +3,355 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Maintainer guide — VortaForge Docs</title>
-<meta name="description" content="How the VortaForge guard, gates, release flow and archive rules work, and what a maintainer has to run.">
+<title>Maintainer guide &mdash; VortaForge documentation</title>
+<meta name="description" content="Release flow, archive rules, the site build, and the claims this project explicitly refuses to make.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); letter-spacing:-0.01em; }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  td code { white-space:nowrap; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html" class="here">API</a><a href="../docs/versions.html" class="here">Versions</a><a href="../docs/php.html" class="here">PHP</a><a href="../docs/warnings.html" class="here">Warnings</a><a href="../docs/archive.html" class="here">Archive</a><a href="../docs/maintainers.html" class="here">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="archive.html">Docs</a> / Maintainers</p>
+<div class="hero">
   <h1>Maintainer guide</h1>
-  <p class="sub">The guard, the gates, the release flow and the archive rules &mdash;
-     what is enforced by code and what is only a convention.</p>
+  <p class="lede">How a change gets from a branch to a release, what gets
+     archived and how, and the claims this project refuses to make.</p>
+</div>
 
-  <div class="note">
-    <strong>Read this before changing anything.</strong> Almost every rule below is
-    backed by a check that will fail your build or your commit. That is deliberate:
-    a policy that only lives in a document gets skipped under deadline pressure.
-  </div>
-
-  <h2 id="guard">The repository guard</h2>
-  <p><code>scripts/repo/datapack_guard.py</code> is a fail-closed check that runs in
-     <code>pre-commit</code>, <code>pre-push</code>, CI (job <code>datapack-guard</code>)
-     and Gradle (<code>guardArchives</code>). It refuses:</p>
-  <ul>
-    <li>new datapack content under a live path;</li>
-    <li>revived archived tooling;</li>
-    <li>blocklisted accounts (by login <em>and</em> by numeric user id);</li>
-    <li>a tripped kill switch;</li>
-    <li>an archive registry that disagrees with the tree.</li>
-  </ul>
-
-  <p>The hooks are <strong>off by default</strong>. Nothing is blocked until
-     <code>git config core.hooksPath scripts/git/hooks</code> has been run, and even
-     then <code>--no-verify</code> bypasses them. The real gate is CI, not the hook.</p>
-
-  <h2 id="archive">Archive rules</h2>
-  <p>Archived content is frozen read-only history. Concretely:</p>
-  <table>
-    <thead><tr><th>Rule</th><th>Enforced by</th></tr></thead>
-    <tbody>
-      <tr><td>Every archived project is registered in <code>archived/archive.json</code></td><td><code>check_archive.py</code></td></tr>
-      <tr><td><code>original_path</code> must no longer exist</td><td><code>check_archive.py</code></td></tr>
-      <tr><td>No workflow may live under <code>archived/</code></td><td><code>check_archive.py</code></td></tr>
-      <tr><td>A registered path must start with <code>archived/</code></td><td><code>check_archive.py</code></td></tr>
-      <tr><td>A non-datapack successor must resolve to a real path</td><td><code>check_archive.py</code> + tests</td></tr>
-      <tr><td><code>archived/</code> is not a Gradle scan root</td><td><code>settings.gradle</code></td></tr>
-    </tbody>
-  </table>
-
-  <p><strong>Do not revive archived content.</strong> If something archived is needed
-     again, it comes back as a new project with its own review, not by flipping a flag.
-     The one exception this project made deliberately is documented: warnings were
-     added to archived packs to tell players the truth about their status, and that
-     change is recorded rather than presented as routine maintenance.</p>
-
-  <h2 id="gates">The two kinds of gate</h2>
-  <h3>In-pack load gate &mdash; retired</h3>
-  <p>macroEngine and RTWrapper-v1.0.1 used to hold the pack closed until a player
-     approved it, with <code>gate/is_open</code> as the query other packs used. It was
-     removed: it reported the pack closed while it was open, and enabling a feature
-     tripped it. No pack in this repository has an in-pack gate now, and nothing
-     queries one.</p>
-  <p>The general point still holds: a runtime gate inside a datapack cannot be
-     enforced by the repository, and deleting one is a decision, not maintenance.</p>
-
-  <h3>Repository gate</h3>
-  <p>The guard and the archive validator. This protects the <em>repository</em>. It has
-     no effect on a world that already has a pack installed, and no effect on a fork.
-     Saying otherwise would be the exact overclaim this project has corrected before:
-     policy distribution is not the same as enforcement.</p>
-
-  <h2 id="release">Release flow</h2>
+<div class="toc">
+  <strong>On this page</strong>
   <ol>
-    <li>Tests must pass: <code>python3 -m unittest discover -s scripts/tests</code>.</li>
-    <li><code>python3 scripts/repo/check_archive.py --strict</code>.</li>
-    <li><code>python3 scripts/repo/datapacks_disable.py verify</code>.</li>
-    <li>Workflow lint (<code>actionlint</code>) and <code>bash -n</code> on shell scripts.</li>
-    <li>Release publishing stays disabled until an append-only design is reviewed.
-        The job is present but gated with <code>if: false</code> &mdash; that is a
-        deliberate policy marker, not a bug to "fix".</li>
+    <li><a href="#guard">The repository guard</a></li>
+    <li><a href="#archive">Archive rules</a></li>
+    <li><a href="#never">The rule that outranks the others</a></li>
+    <li><a href="#release">Release flow</a></li>
+    <li><a href="#site">Building this site</a></li>
+    <li><a href="#backups">Backups</a></li>
+    <li><a href="#honesty">What this project will not claim</a></li>
   </ol>
+</div>
 
-  <h2 id="backups">Backups</h2>
-  <p><code>scripts/ops/backup-org.sh</code> is run by a workflow. Two properties are
-     structural rather than conventional:</p>
-  <ul>
-    <li>The dependency is pinned and hash-verified, installed into a private virtual
-        environment, and the install runs with the token variables stripped from the
-        environment. An untrusted package install never sees the credential.</li>
-    <li>Encryption defaults to <code>gpg</code>. Asking for an unencrypted archive
-        while the artifact leaves the machine is refused outright, not warned about.</li>
-  </ul>
+<h2 id="guard">The repository guard</h2>
+<p>The guard used to be a build step that refused to package a retired pack
+   unless an environment variable was set. It is gone, and the job moved to the
+   build layout instead:</p>
 
-  <h2 id="honesty">What this project will not claim</h2>
-  <ul>
-    <li>A green build does not prove a site deployed. Fetch the published artifact.</li>
-    <li>A label does not silence a security check.</li>
-    <li>A warning is not an audit, and a gate is not a sandbox.</li>
-    <li>Partial or paginated data is never presented as complete; a check that could
-        not run reports that it could not run.</li>
-  </ul>
+<pre><code>def SCAN_ROOTS = ['mods', 'packs', 'examples']</code></pre>
 
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="archive.html">archive register</a> &middot;
-    <a href="warnings.html">pack warnings</a>
-  </footer>
+<p><code>archived/</code> is not a scan root, so nothing underneath it can
+   become a subproject. That is not a check that can be bypassed with a flag -
+   there is no code path from <code>archived/</code> to <code>gradlew dist</code>
+   at all. Removing the environment variable removed the bypass, not the
+   protection.</p>
+
+<h2 id="archive">Archive rules</h2>
+<table>
+  <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>A retired project gets a row in
+            <code>archived/archive.json</code>.</td>
+        <td>Nineteen fields, so a question six months later has an answer
+            without a forensic walk through git.</td></tr>
+    <tr><td>Its <code>reason</code> names what happened, not that it was
+            bad.</td>
+        <td>"A Fabric mod superseded it" is checkable. "It was old" is not.</td></tr>
+    <tr><td>Its <code>original_path</code> is recorded if it moved.</td>
+        <td>The move is the interesting part - it usually explains the
+            retirement.</td></tr>
+    <tr><td>The row is never deleted.</td>
+        <td>Deleting it removes the only evidence the thing existed.</td></tr>
+    <tr><td>Provenance prose and history files are not rewritten.</td>
+        <td>An identifier change (a package rename, a namespace move) must not
+            touch CREDITS-style text. That text is the record of what was.</td></tr>
+    <tr><td>A patch series must still apply.</td>
+        <td>If <code>archived/patches/*.patch</code> stops applying, the record
+            of how a change was made is gone.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="never">The rule that outranks the others</h2>
+<div class="note">
+  <strong>Move identifiers, never history.</strong> When a namespace changes -
+  <code>vortacraftmc</code> becoming <code>vortaforge</code>, say - code, paths,
+  package names and scoreboard holders move. Comments, credits, changelog text
+  and patches do not. A rename that also rewrites the past makes the past
+  unverifiable.
+</div>
+
+<p>The practical test: after a rename, <code>git am</code> on the archived patch
+   series has to still succeed. If it does not, the rename reached into history
+   and needs to be undone.</p>
+
+<h2 id="release">Release flow</h2>
+<ol>
+  <li><strong>Branch from <code>main</code>.</strong> Never commit a release
+      directly - even though some repositories here allow it.</li>
+  <li><strong>Run the gates that exist.</strong>
+      <code>gradlew check</code>, <code>python3 tools/verify.py --pack packs</code>,
+      <code>python3 -m pytest scripts/tests</code>. Verify prints
+      <code>[verify] OK</code> or a list of findings; a non-empty list is a
+      stop.</li>
+  <li><strong>Build the artifacts.</strong> <code>gradlew dist</code>. Every
+      module jar must contain <code>fabric.mod.json</code>,
+      <code>pack.mcmeta</code> and its own <code>data/</code> tree - nothing
+      more.</li>
+  <li><strong>Open a pull request.</strong> A ruleset requires one approving
+      review and three named checks; self-approval is rejected on purpose.</li>
+  <li><strong>Wait for green, then merge.</strong> Squash to one commit.</li>
+</ol>
+
+<table>
+  <thead><tr><th>Check</th><th>Fails when</th></tr></thead>
+  <tbody>
+    <tr><td><code>verify.py</code></td><td>a dangling reference, a module
+        calling a module, a module shipping <code>core/internal/</code>, a
+        cycle, a missing <code>pack.mcmeta</code></td></tr>
+    <tr><td><code>test_module_removal</code></td><td>any of the 34 packs, built
+        without one sibling, fails to complete load and tick</td></tr>
+    <tr><td><code>test_split_guard</code></td><td>a module other than core
+        claims a <code>core/internal/</code> prefix</td></tr>
+    <tr><td>Datapack guard</td><td>a pack outside <code>mods/</code>,
+        <code>packs/</code> or <code>examples/</code> tries to be buildable</td></tr>
+  </tbody>
+</table>
+
+<h2 id="site">Building this site</h2>
+<p>The documentation is static HTML with no runtime framework. Two PHP scripts
+   and two Python scripts run at build time and produce nothing that ships:</p>
+
+<table>
+  <thead><tr><th>Tool</th><th>Runs</th><th>Produces</th></tr></thead>
+  <tbody>
+    <tr><td><code>tools/build_docs_index.php</code></td><td><code>php-cli</code></td>
+        <td><code>_site/docs-index.json</code> - every page, its section and
+            its word count</td></tr>
+    <tr><td><code>tools/test_php_safety.php</code></td><td><code>php-cli</code></td>
+        <td>exit 0 or a list of violations; never publishes</td></tr>
+    <tr><td><code>tools/sitelib.py</code></td><td><code>python3</code></td>
+        <td>the shared page shell - one nav, one footer, one stylesheet</td></tr>
+    <tr><td><code>tools/sync_style.py</code></td><td><code>python3</code></td>
+        <td><code>--check</code> fails if any page's inline style drifted from
+            <code>assets/style.css</code></td></tr>
+  </tbody>
+</table>
+
+<p>No PHP is served. The scripts are CLI-only by construction - each one exits
+   unless <code>PHP_SAPI === 'cli'</code> - and the safety test fails the build
+   if a <code>.php</code> file ever appears in the published tree. Details on
+   <a href="php.html">PHP tooling</a>.</p>
+
+<h2 id="backups">Backups</h2>
+<p>Two things are not in git and need to survive a machine loss:</p>
+<ul>
+  <li><strong>World saves containing scoreboard state.</strong> A macroEngine
+      install writes its variables into objectives that live in the world. The
+      repository cannot restore them.</li>
+  <li><strong>Built artifacts</strong> if a release is pinned somewhere. They
+      are reproducible from a tag, but only if the tag and the toolchain both
+      still exist.</li>
+</ul>
+
+<h2 id="honesty">What this project will not claim</h2>
+<table>
+  <thead><tr><th>Will not claim</th><th>Because</th></tr></thead>
+  <tbody>
+    <tr><td>A gate makes a bad decision safe.</td>
+        <td>A gate blocks the honest user and inconveniences the other one.
+            Both gates were removed for this reason.</td></tr>
+    <tr><td>Archived means broken - or means safe.</td>
+        <td>It means unsupported. Those are three different things and only one
+            of them is knowable from the metadata.</td></tr>
+    <tr><td>Modules are independent by design.</td>
+        <td>They are independent because a test builds each one without its
+            siblings. The design is the seam; the test is the evidence.</td></tr>
+    <tr><td>A warning is an audit.</td>
+        <td>It reports status, not safety. Confusing the two is what made the
+            gate look reasonable.</td></tr>
+    <tr><td>Removing a module cannot change behaviour.</td>
+        <td>It changes behaviour by definition - that feature stops. What it
+            cannot do is stop the engine.</td></tr>
+  </tbody>
+</table>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

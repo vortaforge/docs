@@ -1,0 +1,8 @@
+# Build outputs. Neither is committed: _site is the generated index, _publish is
+# the assembled Pages artifact. Both are reproduced by the workflow.
+_site/
+_publish/
+
+# Python bytecode from tools/ - never committed.
+__pycache__/
+*.pyc

@@ -3,97 +3,327 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>join-throttle — VortaForge Docs</title>
-<meta name="description" content="join-throttle: Fabric mod that rate-limits connection attempts per source address before a join completes.">
+<title>join-throttle &mdash; VortaForge documentation</title>
+<meta name="description" content="join-throttle: per-address connection rate limiting, with every setting and how attempts are counted.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html" class="here">Mods</a><a href="../macroengine/index.html">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html">API</a><a href="../docs/versions.html">Versions</a><a href="../docs/php.html">PHP</a><a href="../docs/warnings.html">Warnings</a><a href="../docs/archive.html">Archive</a><a href="../docs/maintainers.html">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="index.html">Mods</a> / join-throttle</p>
+<div class="hero">
   <h1>join-throttle</h1>
-  <p class="sub">Rate-limits connection attempts per source address, enforced before a
-     full join completes.</p>
+  <p class="lede">Rate-limits connection attempts per address. Five attempts in
+     thirty seconds, per address, counted before the handshake completes.</p>
+</div>
 
-  <h2>What it actually does</h2>
-  <p>The limiter is applied in <code>PlayerManagerMixin</code>, so it runs earlier
-     than most join-side policies: an address that has exhausted its budget is refused
-     before the player is fully admitted. Addresses are normalised by
-     <code>AddressKeys</code> so that two spellings of the same address do not become
-     two independent buckets &mdash; that would silently double an attacker's budget.</p>
+<div class="toc">
+  <strong>On this page</strong>
+  <ol>
+    <li><a href="#does">What it actually does</a></li>
+    <li><a href="#install">Installation</a></li>
+    <li><a href="#settings">Settings</a></li>
+    <li><a href="#choosing">Choosing values</a></li>
+    <li><a href="#counting">How attempts are counted</a></li>
+    <li><a href="#limits">What it does not do</a></li>
+  </ol>
+</div>
 
-  <h2>Settings</h2>
-  <table>
-    <thead><tr><th>Field</th><th>Default</th><th>Range</th><th>Meaning</th></tr></thead>
-    <tbody>
-      <tr><td><code>maxJoins</code></td><td>5</td><td>1 &ndash; 1000</td><td>Allowed attempts per window.</td></tr>
-      <tr><td><code>windowSeconds</code></td><td>30</td><td>1 &ndash; 3600</td><td>Sliding window length.</td></tr>
-      <tr><td><code>exemptAddresses</code></td><td><code>[]</code></td><td>&mdash;</td><td>Exact address keys to exempt.</td></tr>
-      <tr><td><code>denyMessage</code></td><td>&ldquo;Too many connection attempts&hellip;&rdquo;</td><td>&mdash;</td><td>Disconnect screen text.</td></tr>
-    </tbody>
-  </table>
+<h2 id="does">What it actually does</h2>
+<p>It counts join attempts per client address inside a sliding window. When an
+   address exceeds the limit, further attempts are refused during that window
+   with <code>denyMessage</code> instead of reaching the server's own login
+   handling.</p>
 
-  <div class="warnbox">
-    <strong>Exemptions are exact matches.</strong>
-    Listing <code>10.0.0.1</code> does not exempt <code>10.0.0.10</code>. If you
-    exempt a whole range you are relying on prefix behaviour the mod does not
-    implement, and it will look like the exemption silently failed.
-  </div>
+<p>It works at the connection layer, not in the game - the attempt is denied
+   before a player entity exists. That is why it can stop a reconnect flood that
+   the server would otherwise spend real work on.</p>
 
-  <h2>Choosing values</h2>
-  <p>The default (5 attempts per 30 seconds) suits a small server and is deliberately
-     loose enough not to catch a player reconnecting after a crash. Tighten the window
-     rather than the count if you are fighting a bot that is reconnecting in a loop:
-     a low <code>maxJoins</code> with a long window punishes ordinary players who have
-     flaky connections.</p>
+<h2 id="install">Installation</h2>
+<ol>
+  <li>Drop the jar in <code>mods/</code>. Fabric Loader only; no Fabric API.</li>
+  <li>Start the server once to create <code>config/join-throttle.json</code>.</li>
+  <li>Adjust and restart.</li>
+</ol>
 
-  <pre><code>{
+<div class="warnbox">
+  <strong>Put it behind your proxy's real address.</strong> If the server sits
+  behind Velocity or BungeeCord and does not forward the client address, every
+  connection arrives from the proxy's address and one busy address throttles
+  everyone. Enable address forwarding on the proxy first.
+</div>
+
+<h2 id="settings">Settings</h2>
+<table>
+  <thead><tr><th>Key</th><th>Default</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>maxJoins</code></td><td><code>5</code></td>
+        <td>How many attempts an address may make inside the window before
+            further ones are refused.</td></tr>
+    <tr><td><code>windowSeconds</code></td><td><code>30</code></td>
+        <td>The length of the sliding window, in seconds. The count is not
+            reset on a boundary; attempts older than the window stop
+            counting.</td></tr>
+    <tr><td><code>denyMessage</code></td>
+        <td><code>"Too many connection attempts. Please wait a moment and try again."</code></td>
+        <td>The disconnect reason shown to a refused client. Keep it vague on
+            purpose - a precise message tells an attacker exactly how much room
+            is left.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="choosing">Choosing values</h2>
+
+<div class="grid">
+  <div class="card">
+    <h3>The default</h3>
+    <pre><code>{
   "maxJoins": 5,
-  "windowSeconds": 30,
-  "exemptAddresses": [],
-  "denyMessage": "Too many connection attempts. Please wait a moment and try again."
+  "windowSeconds": 30
 }</code></pre>
-
-  <div class="note">
-    <strong>This is not a DDoS defence.</strong> It limits application-level join
-    attempts per address. Traffic that never reaches the join handler, or that comes
-    from many addresses, is outside what a mod at this layer can see.
+    <p>Five in thirty seconds. Generous for a person with a flaky connection -
+       they can fail four times and still get in - and tight enough that a
+       scripted flood is stopped almost immediately.</p>
   </div>
+  <div class="card">
+    <h3>Strict, public server</h3>
+    <pre><code>{
+  "maxJoins": 3,
+  "windowSeconds": 60
+}</code></pre>
+    <p>Three in a minute. Catches slow-and-steady reconnectors. Raise it if you
+       get complaints from players on mobile data, who legitimately drop and
+       retry more than once a minute.</p>
+  </div>
+  <div class="card">
+    <h3>Whitelisted, private</h3>
+    <pre><code>{
+  "maxJoins": 10,
+  "windowSeconds": 15
+}</code></pre>
+    <p>Loose. The whitelist is the real boundary here; this setting only stops
+       a runaway client, so it should never be the thing that locks out a
+       legitimate player.</p>
+  </div>
+</div>
 
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="afk-manager.html">afk-manager</a> &middot;
-    <a href="../docs/api.html">API reference</a>
-  </footer>
+<h2 id="counting">How attempts are counted</h2>
+<ul>
+  <li><strong>Per address, not per name.</strong> Two players behind one home
+      router share a count.</li>
+  <li><strong>Refused attempts count.</strong> Being throttled does not reset
+      the window, so hammering extends the refusal rather than shortening
+      it.</li>
+  <li><strong>A successful join also counts.</strong> An address that joins five
+      times in thirty seconds is at the limit even if all five succeeded.</li>
+  <li><strong>State is in memory.</strong> A restart clears every counter. This
+      is not a ban list and does not survive a restart.</li>
+  <li><strong>IPv4 and IPv6 are separate addresses.</strong> A client that can
+      reach the server over both is counted separately on each.</li>
+</ul>
+
+<h2 id="limits">What it does not do</h2>
+<ul>
+  <li><strong>It does not ban.</strong> No permanent record, no allow-list, no
+      staff command to lift a throttle - it clears on its own.</li>
+  <li><strong>It does not distinguish a bot from a person.</strong> There is no
+      CAPTCHA, no proof-of-work and no per-username logic.</li>
+  <li><strong>It does not limit in-game actions.</strong> Once a player is
+      connected, this mod has no further effect. Movement, chat and commands
+      are not throttled.</li>
+  <li><strong>It does not replace a firewall.</strong> A distributed flood from
+      many addresses stays under the per-address limit by construction. This
+      stops reconnection loops, not a botnet.</li>
+</ul>
+
+<div class="note">
+  <strong>These are the shipped values.</strong>
+  <code>maxJoins = 5</code>, <code>windowSeconds = 30</code> and the default
+  <code>denyMessage</code> come from <code>ThrottleSettings</code>, and every
+  value is clamped by <code>sanitized()</code> before use - a negative window
+  becomes the minimum rather than an unbounded window.
+</div>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>

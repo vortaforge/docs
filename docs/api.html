@@ -3,185 +3,457 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>API reference — VortaForge Docs</title>
-<meta name="description" content="VortaForge API reference: mod commands, configuration schemas, settings file format and datapack interop contract.">
+<title>API &mdash; VortaForge documentation</title>
+<meta name="description" content="macroEngine&#x27;s core contract: the 22 hook slots, how a module joins one, published services and what verify.py checks.">
 <style>
-  :root { color-scheme: light dark; --bg:#fbfbfd; --fg:#16181d; --muted:#5b6270; --line:#e2e5ec; --card:#fff;
-          --accent:#2563eb; --code:#f3f4f7; --warn:#b45309; --warnbg:#fff7ed; --warnline:#fdba74; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0e1014; --fg:#e8eaf0; --muted:#9aa3b2; --line:#252a33; --card:#151920;
-            --accent:#7ab7ff; --code:#1b2028; --warn:#fbbf24; --warnbg:#241a08; --warnline:#7c4a03; }
+/* ==========================================================================
+   VortaForge docs - one stylesheet for every page.
+
+   Why inline and not a linked file: the site is published to GitHub Pages and
+   also rendered in an in-app preview that has no network access at all. A
+   linked stylesheet is a network request, so it would disappear there. Every
+   page therefore embeds this text in a <style> block, and tools/sync_style.py
+   is what keeps those copies identical - it is not a build step, just a check
+   and a copy so the seven near-duplicates that used to exist cannot come back.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
+  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
+  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
+  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
+  --okline: #86efac;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
+    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
+    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
+    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
+    --okline: #14532d;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg);
-         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:880px; margin:0 auto; padding:34px 20px 80px; }
-  h1 { font-size:2rem; margin:0 0 8px; letter-spacing:-0.02em; }
-  h2 { font-size:1.32rem; margin:42px 0 12px; padding-top:20px; border-top:1px solid var(--line); letter-spacing:-0.01em; }
-  h3 { font-size:1.04rem; margin:26px 0 8px; }
-  .sub { color:var(--muted); margin:0 0 6px; font-size:15px; }
-  a { color:var(--accent); }
-  code,pre { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; }
-  code { background:var(--code); padding:2px 5px; border-radius:4px; }
-  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
-        overflow-x:auto; line-height:1.5; }
-  pre code { background:none; padding:0; }
-  table { border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px; }
-  th,td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-weight:600; color:var(--muted); font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
-  td code { white-space:nowrap; }
-  .note { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent);
-          border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox { background:var(--warnbg); border:1px solid var(--warnline); border-left:4px solid var(--warnline);
-             border-radius:8px; padding:14px 18px; margin:18px 0; font-size:14.5px; }
-  .warnbox strong { color:var(--warn); }
-  footer { margin-top:56px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13.5px; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
+
+/* --- headings ------------------------------------------------------------ */
+
+h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.04rem; margin: 26px 0 8px; }
+h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: .05em; }
+
+.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
+
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+/* --- code ---------------------------------------------------------------- */
+
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+}
+code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; }
+
+/* --- tables -------------------------------------------------------------- */
+
+table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* --- callouts ------------------------------------------------------------ */
+
+.note, .warnbox, .okbox {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  font-size: 14.5px;
+}
+.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
+.warnbox strong { color: var(--warn); }
+.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
+.okbox strong { color: var(--ok); }
+
+/* --- layout helpers ------------------------------------------------------ */
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+.card h3 { margin-top: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.grid .card { margin: 0; }
+
+.pill, .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
+.yes { color: var(--ok); }
+.no { color: var(--warn); }
+
+/* --- table of contents --------------------------------------------------- */
+
+.toc {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 20px 0 26px;
+  font-size: 14.5px;
+}
+.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
+.toc li { margin: 3px 0; }
+.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+/* --- hero and banner ----------------------------------------------------- */
+
+.hero { padding: 10px 0 26px; }
+.hero h1 { font-size: 2.35rem; }
+.banner {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warnline);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 22px;
+  font-size: 14px;
+}
+.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
+
+/* --- site navigation ----------------------------------------------------- */
+
+.nav {
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 26px;
+  padding: 0 0 12px;
+  font-size: 14px;
+}
+.nav a { margin-right: 16px; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .here { color: var(--fg); font-weight: 600; }
+
+.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+.crumbs a { text-decoration: none; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer a { color: var(--muted); }
+
+/* --- print --------------------------------------------------------------- */
+
+@media print {
+  .nav, footer { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; text-decoration: underline; }
+  pre, table { break-inside: avoid; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html" class="here">API</a><a href="../docs/versions.html" class="here">Versions</a><a href="../docs/php.html" class="here">PHP</a><a href="../docs/warnings.html" class="here">Warnings</a><a href="../docs/archive.html" class="here">Archive</a><a href="../docs/maintainers.html" class="here">Maintainers</a></nav>
+<p class="crumbs"><a href="../index.html">Home</a> / <a href="../macroengine/index.html">macroEngine</a> / API</p>
+<div class="hero">
+  <h1>API</h1>
+  <p class="lede">What the core promises a module, and what it expects back.
+     Anything not on this page is not guaranteed - and is not reachable anyway,
+     because a pack cannot see across a pack boundary.</p>
+</div>
 
-  <h1>API reference</h1>
-  <p class="sub">The public surfaces you can build against: mod commands, the settings
-     file format, and the datapack interop contract.</p>
+<div class="toc">
+  <strong>On this page</strong>
+  <ol>
+    <li><a href="#rule">The one rule</a></li>
+    <li><a href="#joining">Joining a hook</a></li>
+    <li><a href="#slots">The 22 slots</a></li>
+    <li><a href="#values">Slots that carry a value</a></li>
+    <li><a href="#services">Services the core publishes</a></li>
+    <li><a href="#internal">Where implementations live</a></li>
+    <li><a href="#ids">Function ids and naming</a></li>
+    <li><a href="#checks">What gets checked</a></li>
+    <li><a href="#manifest">The Fabric manifest</a></li>
+  </ol>
+</div>
 
-  <div class="note">
-    <strong>Scope.</strong> Only the two live mods have a supported API surface.
-    Archived datapacks are documented for reference and carry no compatibility
-    promise &mdash; see <a href="warnings.html">pack warnings</a>.
-  </div>
+<h2 id="rule">The one rule</h2>
+<p>The core never calls a module by name. When it needs a module's work it runs
+   a <em>tag</em>:</p>
 
-  <h2 id="afk">afk-manager</h2>
-  <p>Marks players AFK after a period of no meaningful movement and can optionally
-     disconnect them after a longer period.</p>
+<pre><code>function #me_core_module:hook/trigger_dispatch</code></pre>
 
-  <h3>Command</h3>
-  <table>
-    <thead><tr><th>Command</th><th>Permission</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td><code>/afk</code></td><td>None (any player)</td><td>Declares the calling player AFK immediately and prints the current status.</td></tr>
-    </tbody>
-  </table>
+<p>Note the <code>#</code>. That is not a function, it is a tag, and the core
+   does not know who is inside it. Everything else in this document exists to
+   keep that sentence true.</p>
 
-  <h3>Configuration</h3>
-  <p>Stored as JSON in the mod's <code>SettingsFile</code>. Every value is clamped by
-     <code>AfkSettings.sanitized()</code> before use, so an out-of-range number in the
-     file is corrected rather than crashing the server.</p>
+<h2 id="joining">Joining a hook</h2>
+<p>You do not edit the core's tag file. You ship a file with the same tag id in
+   your own pack:</p>
 
-  <table>
-    <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Range / notes</th></tr></thead>
-    <tbody>
-      <tr><td><code>afkAfterSeconds</code></td><td>int</td><td><code>300</code></td><td>10 &ndash; 86&nbsp;400. Idle time before a player is marked AFK.</td></tr>
-      <tr><td><code>kickAfterSeconds</code></td><td>int</td><td><code>0</code></td><td>0 &ndash; 604&nbsp;800. <code>0</code> disables kicking entirely.</td></tr>
-      <tr><td><code>announce</code></td><td>bool</td><td><code>true</code></td><td>Broadcast AFK state changes in chat.</td></tr>
-      <tr><td><code>exemptOperatorsFromKick</code></td><td>bool</td><td><code>true</code></td><td>Operators are marked AFK but never disconnected.</td></tr>
-      <tr><td><code>kickMessage</code></td><td>string</td><td><code>"Kicked for being AFK."</code></td><td>Shown on the disconnect screen.</td></tr>
-    </tbody>
-  </table>
-
-  <pre><code>{
-  "afkAfterSeconds": 300,
-  "kickAfterSeconds": 0,
-  "announce": true,
-  "exemptOperatorsFromKick": true,
-  "kickMessage": "Kicked for being AFK."
+<pre><code>// me_trigger_module/data/me_core_module/tags/function/hook/trigger_dispatch.json
+{
+  "replace": false,
+  "values": [
+    { "id": "me_trigger_module:core/internal/trigger/dispatch", "required": false }
+  ]
 }</code></pre>
 
-  <p>The idle decision is made from sampled motion (<code>MotionSample</code> /
-     <code>IdleTracker</code>), not from a raw timer, so a player holding a movement
-     key against a wall does not stay "active" forever.</p>
+<p>Both files declare the same tag id. Because <code>replace: false</code> the
+   game unions them - the core's list plus yours - so the core's call runs your
+   function without either side naming the other.</p>
 
-  <h2 id="join-throttle">join-throttle</h2>
-  <p>Rate-limits connection attempts per source address. Enforced in
-     <code>PlayerManagerMixin</code>, so it applies before a full join completes.</p>
+<p><code>required: false</code> is not cosmetic. It tells the game that this
+   value may be absent. Remove the module and the tag still loads; the feature
+   simply stops. With <code>required: true</code> a missing value is a load
+   error, and the pack that was supposed to be removable takes the world with
+   it.</p>
 
-  <table>
-    <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Range / notes</th></tr></thead>
-    <tbody>
-      <tr><td><code>maxJoins</code></td><td>int</td><td><code>5</code></td><td>1 &ndash; 1000. Attempts allowed per window.</td></tr>
-      <tr><td><code>windowSeconds</code></td><td>int</td><td><code>30</code></td><td>1 &ndash; 3600. Length of the sliding window.</td></tr>
-      <tr><td><code>exemptAddresses</code></td><td>list&lt;string&gt;</td><td><code>[]</code></td><td>Keys are derived by <code>AddressKeys</code>; list the address form it produces.</td></tr>
-      <tr><td><code>denyMessage</code></td><td>string</td><td><code>"Too many connection attempts..."</code></td><td>Shown on the disconnect screen.</td></tr>
-    </tbody>
-  </table>
+<div class="warnbox">
+  <strong>Ship a new tag file, never an edited one.</strong> The path
+  <code>data/me_core_module/tags/function/hook/&lt;slot&gt;.json</code> lives in
+  your pack, but it must not <em>replace</em> the core's list. Two packs that
+  both set <code>replace: true</code> on the same slot leave exactly one of them
+  working, and neither of them knows it.
+</div>
 
-  <pre><code>{
-  "maxJoins": 5,
-  "windowSeconds": 30,
-  "exemptAddresses": [],
-  "denyMessage": "Too many connection attempts. Please wait a moment and try again."
+<h2 id="slots">The 22 slots</h2>
+<table>
+  <thead><tr><th>Slot</th><th>Carries a value</th><th>Tag</th></tr></thead>
+  <tbody>
+    <tr><td><code>cb_tick</code></td><td>side effect</td><td><code>me_core_module:hook/cb_tick</code></td></tr>
+    <tr><td><code>cmd_freeze_tick</code></td><td>side effect</td><td><code>me_core_module:hook/cmd_freeze_tick</code></td></tr>
+    <tr><td><code>config_apply</code></td><td>side effect</td><td><code>me_core_module:hook/config_apply</code></td></tr>
+    <tr><td><code>config_ensure</code></td><td>side effect</td><td><code>me_core_module:hook/config_ensure</code></td></tr>
+    <tr><td><code>config_init</code></td><td>side effect</td><td><code>me_core_module:hook/config_init</code></td></tr>
+    <tr><td><code>events_fire</code></td><td>side effect</td><td><code>me_core_module:hook/events_fire</code></td></tr>
+    <tr><td><code>hook_tick</code></td><td>side effect</td><td><code>me_core_module:hook/hook_tick</code></td></tr>
+    <tr><td><code>interaction_tick</code></td><td>side effect</td><td><code>me_core_module:hook/interaction_tick</code></td></tr>
+    <tr><td><code>load</code></td><td>side effect</td><td><code>me_core_module:hook/load</code></td></tr>
+    <tr><td><code>perm_require</code></td><td><span class=yes>value</span></td><td><code>me_core_module:hook/perm_require</code></td></tr>
+    <tr><td><code>perm_tick</code></td><td>side effect</td><td><code>me_core_module:hook/perm_tick</code></td></tr>
+    <tr><td><code>player_enumerate</code></td><td>side effect</td><td><code>me_core_module:hook/player_enumerate</code></td></tr>
+    <tr><td><code>player_get_name</code></td><td><span class=yes>value</span></td><td><code>me_core_module:hook/player_get_name</code></td></tr>
+    <tr><td><code>player_init</code></td><td>side effect</td><td><code>me_core_module:hook/player_init</code></td></tr>
+    <tr><td><code>player_init_from_name</code></td><td>side effect</td><td><code>me_core_module:hook/player_init_from_name</code></td></tr>
+    <tr><td><code>player_init_online</code></td><td>side effect</td><td><code>me_core_module:hook/player_init_online</code></td></tr>
+    <tr><td><code>player_resolve</code></td><td>side effect</td><td><code>me_core_module:hook/player_resolve</code></td></tr>
+    <tr><td><code>player_tick</code></td><td>side effect</td><td><code>me_core_module:hook/player_tick</code></td></tr>
+    <tr><td><code>queue_process</code></td><td>side effect</td><td><code>me_core_module:hook/queue_process</code></td></tr>
+    <tr><td><code>tick</code></td><td>side effect</td><td><code>me_core_module:hook/tick</code></td></tr>
+    <tr><td><code>trigger_dispatch</code></td><td>side effect</td><td><code>me_core_module:hook/trigger_dispatch</code></td></tr>
+    <tr><td><code>wand_tick</code></td><td>side effect</td><td><code>me_core_module:hook/wand_tick</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="values">Slots that carry a value</h2>
+<p>A tag can run several functions, so there is no single return value. What the
+   game does instead:</p>
+<ul>
+  <li><code>execute store result ... run function #tag</code> stores the
+      <strong>sum</strong> of the contributors' return values.</li>
+  <li><code>unless function #tag</code> succeeds when the whole tag returns
+      non-zero.</li>
+</ul>
+<p>With one contributor this is exactly a scalar return, which is why
+   <code>perm_require</code> and <code>player_get_name</code> can behave like
+   queries today. Add a second contributor and the values sum - deliberately, or
+   not at all.</p>
+
+<h2 id="services">Services the core publishes</h2>
+<p>These ids are a stable surface. A module may call them; their signatures do
+   not change.</p>
+<table>
+  <thead><tr><th>Id</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>me_core_module:text/split</code></td><td>Split text on a separator, into <code>macroengine:output</code></td></tr>
+    <tr><td><code>me_core_module:text/concat</code></td><td>Join text values</td></tr>
+    <tr><td><code>me_core_module:text/safe</code></td><td>Is this string safe as a score/tag literal (1/0)</td></tr>
+    <tr><td><code>me_core_module:text/ctl</code></td><td>Does it contain a control character</td></tr>
+    <tr><td><code>me_core_module:text/lower</code></td><td>Lower-case</td></tr>
+    <tr><td><code>me_core_module:text/upper</code></td><td>Upper-case</td></tr>
+    <tr><td><code>me_core_module:text/replace</code></td><td>Replace text</td></tr>
+    <tr><td><code>me_core_module:text/reset</code></td><td>Clear the text scratch space</td></tr>
+    <tr><td><code>me_core_module:core/ext/perm_count</code></td><td>Permission counter</td></tr>
+    <tr><td><code>me_core_module:core/ext/player/add_var_clamped</code></td><td>Clamped add to a player variable</td></tr>
+    <tr><td><code>me_core_module:core/ext/player/toggle_var</code></td><td>Flip a player variable</td></tr>
+    <tr><td><code>me_core_module:core/ext/world/count_near</code></td><td>Count nearby entities</td></tr>
+  </tbody>
+</table>
+
+<h2 id="internal">Where implementations live</h2>
+<p>This is the rule the split hinges on, and it is the one that took two
+   attempts to get right:</p>
+
+<div class="note">
+  <strong>Every function that implements something lives in
+  <code>me_core_module</code>, under <code>core/internal/</code>. A module ships
+  its public surface and nothing else.</strong>
+</div>
+
+<p>A module does call <code>me_core_module:core/internal/...</code> - that is
+   normal and intended. There is one implementation of a feature, it lives in the
+   core, and every caller reaches it by fully-qualified id.</p>
+
+<p>What must never exist is a module carrying its own copy:</p>
+
+<pre><code>data/me_cb_module/function/core/internal/cb/apply_defaults.mcfunction   &lt;- wrong</code></pre>
+
+<p>That path reads like core's tree, resolves like a real id and passes a
+   reference check - but it is private to <code>me_cb_module</code>, it is a
+   second copy of core's code, and deleting the module silently deletes it.
+   <code>verify.py</code> reports it as <code>module-internal</code> and fails the
+   build. <code>test_split_guard.py</code> refuses any table in which something
+   other than core claims a <code>core/internal/</code> prefix, so the generator
+   cannot produce the shape at all.</p>
+
+<p>Three functions are shared between core and a module - the store renderer,
+   the multi-command executor and the player initialiser. Those are
+   infrastructure, so they live in core, and the feature keeps a thin public
+   function at its own id that forwards to them.</p>
+
+<h2 id="ids">Function ids and naming</h2>
+<p>Namespace <code>me_&lt;name&gt;_module</code>, ids
+   <code>me_&lt;name&gt;_module:&lt;path&gt;</code>, and no <code>api/</code> or
+   <code>systems/</code> segment. A function is public because the tag names it,
+   not because of the directory it sits in.</p>
+
+<table>
+  <thead><tr><th>Good</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><code>me_wand_module:wand/tick</code></td><td>namespace identifies the module</td></tr>
+    <tr><td><code>me_perm_module:perm/require</code></td><td>one path segment for the area</td></tr>
+    <tr><td><code>me_player_module:player/resolve</code></td><td>matches the slot it serves</td></tr>
+  </tbody>
+</table>
+<p>Forbidden: <code>macroengine:api/wand/tick</code> (shared namespace),
+   <code>wand:tick</code> (module not identified),
+   <code>me_wand_module:systems/tick</code> (invented layer).</p>
+
+<p>Reaching into <em>another module's</em> namespace is forbidden too - modules
+   never call each other's public surface. Both call core.</p>
+
+<h2 id="checks">What gets checked</h2>
+<p><code>python3 tools/verify.py --pack packs</code> or <code>gradlew check</code>
+   looks for:</p>
+<table>
+  <thead><tr><th>Finding</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>dangling</code></td><td>a function or tag reference that does not resolve</td></tr>
+    <tr><td><code>old-namespace</code></td><td>a real call still pointing at the old <code>macroengine:</code> namespace</td></tr>
+    <tr><td><code>module-internal</code></td><td>a module shipping a <code>core/internal/</code> tree of its own</td></tr>
+    <tr><td><code>private-access</code></td><td>a module calling another module</td></tr>
+    <tr><td><code>hooks</code></td><td>the core calling a module by name</td></tr>
+    <tr><td><code>cycle</code></td><td>a cycle in the module dependency graph</td></tr>
+    <tr><td><code>pack-layout</code></td><td>a missing <code>pack.mcmeta</code> or an empty pack</td></tr>
+  </tbody>
+</table>
+<p>Zero problems prints <code>[verify] OK</code>.</p>
+
+<h2 id="manifest">The Fabric manifest</h2>
+<p>Each module is a Fabric mod that bundles a datapack: the jar is the mod, the
+   <code>data/</code> tree at its root is what Minecraft loads.</p>
+
+<pre><code>{
+  "schemaVersion": 1,
+  "id": "macroengine-wand",
+  "version": "${version}",
+  "environment": "*",
+  "depends": {
+    "fabricloader": "&gt;=0.20.1",
+    "macroengine-core": "*"
+  }
 }</code></pre>
 
-  <h3>Behaviour worth knowing</h3>
-  <ul>
-    <li>The limiter is keyed on the address as produced by <code>AddressKeys</code>,
-        which normalises the form used as the key. Two spellings of the same address
-        must not become two buckets &mdash; that would double an attacker's budget.</li>
-    <li>Exemptions are exact matches, not prefixes. Exempting
-        <code>10.0.0.1</code> does not exempt <code>10.0.0.10</code>.</li>
-    <li>Values are clamped by <code>ThrottleSettings.sanitized()</code>; a negative
-        window becomes the minimum rather than an unbounded window.</li>
-  </ul>
+<p><code>depends.macroengine-core</code> makes Fabric refuse to start an orphan
+   module instead of loading a pack whose calls go nowhere.
+   <code>environment: "*"</code> matters because the pack has to load in
+   single-player as well as on a server.</p>
 
-  <h2 id="interop">Datapack interop contract</h2>
-  <p>Archived packs that expose state use scoreboard objectives as the contract.
-     macroEngine used to publish one: <code>macroengine:gate/is_open</code>, backed by
-     <code>#macroengine.open</code> in <code>vortaforge.gate</code>, so another pack could
-     ask whether it was usable before relying on it.</p>
+<h2>Every module, its namespace and its slots</h2>
+<table>
+  <thead><tr><th>Mod id</th><th>Namespace</th><th>Functions</th><th>Slots it fills</th></tr></thead>
+  <tbody>
+    <tr><td><code>macroengine-block</code></td><td><code>me_block_module</code></td><td>8</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-cb</code></td><td><code>me_cb_module</code></td><td>9</td><td><code>cb_tick</code></td></tr>
+    <tr><td><code>macroengine-cmd</code></td><td><code>me_cmd_module</code></td><td>123</td><td><code>cmd_freeze_tick</code></td></tr>
+    <tr><td><code>macroengine-color</code></td><td><code>me_color_module</code></td><td>10</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-config</code></td><td><code>me_config_module</code></td><td>12</td><td><code>config_ensure</code>, <code>config_init</code>, <code>config_apply</code></td></tr>
+    <tr><td><code>macroengine-container</code></td><td><code>me_container_module</code></td><td>9</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-cooldown</code></td><td><code>me_cooldown_module</code></td><td>12</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-core</code></td><td><code>me_core_module</code></td><td>911</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-diagnostics</code></td><td><code>me_diagnostics_module</code></td><td>2</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-events</code></td><td><code>me_events_module</code></td><td>13</td><td><code>events_fire</code></td></tr>
+    <tr><td><code>macroengine-flag</code></td><td><code>me_flag_module</code></td><td>13</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-gamerule</code></td><td><code>me_gamerule_module</code></td><td>3</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-geo</code></td><td><code>me_geo_module</code></td><td>9</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-hook</code></td><td><code>me_hook_module</code></td><td>40</td><td><code>hook_tick</code></td></tr>
+    <tr><td><code>macroengine-input</code></td><td><code>me_input_module</code></td><td>41</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-interaction</code></td><td><code>me_interaction_module</code></td><td>7</td><td><code>interaction_tick</code></td></tr>
+    <tr><td><code>macroengine-item</code></td><td><code>me_item_module</code></td><td>6</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-lib</code></td><td><code>me_lib_module</code></td><td>53</td><td><code>queue_process</code></td></tr>
+    <tr><td><code>macroengine-logic</code></td><td><code>me_logic_module</code></td><td>10</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-macro</code></td><td><code>me_macro_module</code></td><td>5</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-perm</code></td><td><code>me_perm_module</code></td><td>20</td><td><code>perm_tick</code>, <code>perm_require</code></td></tr>
+    <tr><td><code>macroengine-player</code></td><td><code>me_player_module</code></td><td>58</td><td><code>player_enumerate</code>, <code>player_resolve</code>, <code>player_init</code>, <code>player_init_online</code>, <code>player_init_from_name</code>, <code>player_get_name</code></td></tr>
+    <tr><td><code>macroengine-queue</code></td><td><code>me_queue_module</code></td><td>6</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-rate-limit</code></td><td><code>me_rate_limit_module</code></td><td>7</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-sound</code></td><td><code>me_sound_module</code></td><td>3</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-state</code></td><td><code>me_state_module</code></td><td>11</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-store</code></td><td><code>me_store_module</code></td><td>32</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-text</code></td><td><code>me_text_module</code></td><td>5</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-title</code></td><td><code>me_title_module</code></td><td>16</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-toggle</code></td><td><code>me_toggle_module</code></td><td>25</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-trigger</code></td><td><code>me_trigger_module</code></td><td>7</td><td><code>trigger_dispatch</code></td></tr>
+    <tr><td><code>macroengine-tui</code></td><td><code>me_tui_module</code></td><td>4</td><td>&mdash;</td></tr>
+    <tr><td><code>macroengine-wand</code></td><td><code>me_wand_module</code></td><td>12</td><td><code>wand_tick</code></td></tr>
+    <tr><td><code>macroengine-world</code></td><td><code>me_world_module</code></td><td>27</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
 
-  <div class="warnbox">
-    <strong>That query no longer exists.</strong> The gate layer was removed from
-    macroEngine and from RTWrapper-v1.0.1: it reported the pack closed while it was
-    open, and enabling a feature tripped it. Any call to
-    <code>macroengine:gate/is_open</code> in another pack is now a broken function
-    call and should be deleted. There is no replacement &mdash; an archived datapack
-    has no readiness state to poll.
-  </div>
-
-  <div class="warnbox">
-    <strong>Archived &mdash; no compatibility promise.</strong>
-    This contract reflects the code as archived. It is not maintained and may not
-    behave as described on current Minecraft versions. Do not build a live dependency
-    on an archived pack; see <a href="warnings.html#you-should">what running an
-    archived pack means</a>.
-  </div>
-
-  <h2 id="text">Text components and <code>click_event</code></h2>
-  <p>Interactive chat text uses text components. The field names changed in
-     Minecraft 1.21.5 and the two forms are not interchangeable:</p>
-
-  <table>
-    <thead><tr><th></th><th>Before 1.21.5</th><th>1.21.5 and newer</th></tr></thead>
-    <tbody>
-      <tr><td>Field</td><td><code>clickEvent</code></td><td><code>click_event</code></td></tr>
-      <tr><td><code>open_url</code></td><td><code>{"action":"open_url","value":"…"}</code></td><td><code>{"action":"open_url","url":"…"}</code></td></tr>
-      <tr><td><code>run_command</code></td><td><code>{"action":"run_command","value":"/…"}</code></td><td><code>{"action":"run_command","command":"/…"}</code></td></tr>
-      <tr><td><code>change_page</code></td><td><code>{"action":"change_page","value":"1"}</code></td><td><code>{"action":"change_page","page":1}</code></td></tr>
-      <tr><td><code>show_text</code></td><td><code>text</code></td><td><code>value</code> (renamed in 25w03a)</td></tr>
-      <tr><td>Hover field</td><td><code>hoverEvent</code></td><td><code>hover_event</code></td></tr>
-    </tbody>
-  </table>
-
-  <p>Two further rules matter:</p>
-  <ul>
-    <li>From 1.21.5, <code>open_url</code> only parses a real URI beginning with
-        <code>https://</code> or <code>http://</code>. A bare hostname now fails
-        instead of silently doing nothing.</li>
-    <li>1.21.6 added a <code>minecraft:custom</code> click action for servers that
-        want to handle clicks themselves.</li>
-  </ul>
-
-  <p><code>pack.mcmeta</code> does <em>not</em> accept text components. It takes only
-     <code>description</code>, <code>pack_format</code>, <code>supported_formats</code>,
-     <code>min_format</code> and <code>max_format</code>. A clickable in-game warning
-     therefore has to be issued at load time by a function, not written into metadata.</p>
-
-  <footer>
-    VortaForge &middot; Unlicense &middot;
-    <a href="../index.html">docs home</a> &middot;
-    <a href="warnings.html">pack warnings</a> &middot;
-    <a href="versions.html">version matrix</a>
-  </footer>
+<div class="note">
+  <strong>Source:</strong> <code>modules.json</code> and
+  <code>docs/CORE.md</code> in <code>macroengine-modules</code> - 34 artifacts,
+  22 slots, 1,529 functions. If a build disagrees with this page, the build is
+  right.
+</div>
+<footer>
+  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
+  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
+</footer>
 </div>
 </body>
 </html>
