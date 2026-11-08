@@ -1,193 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Architecture &mdash; VortaForge documentation</title>
-<meta name="description" content="How macroEngine keeps 33 module packs independent: the 22 hook slots, what the core owns, and why removal works.">
-<style>
-/* ==========================================================================
-   VortaForge docs - one stylesheet for every page.
+<?php
+declare(strict_types=1);
 
-   Why inline and not a linked file: the site is published to GitHub Pages and
-   also rendered in an in-app preview that has no network access at all. A
-   linked stylesheet is a network request, so it would disappear there. Every
-   page therefore embeds this text in a <style> block, and tools/sync_style.py
-   is what keeps those copies identical - it is not a build step, just a check
-   and a copy so the seven near-duplicates that used to exist cannot come back.
-   ========================================================================== */
+/**
+ * Architecture
+ *
+ * This is the page. Everything below `$body` is what a reader sees; the shell
+ * around it - doctype, head, navigation, footer - is in tools/sitelib.php, so
+ * it exists once for all fifteen pages.
+ */
 
-:root {
-  color-scheme: light dark;
-  --bg: #fbfbfd;      --fg: #16181d;    --muted: #5b6270;
-  --line: #e2e5ec;    --card: #ffffff;  --accent: #2563eb;
-  --code: #f3f4f7;    --warn: #b45309;  --warnbg: #fff7ed;
-  --warnline: #fdba74; --ok: #15803d;   --okbg: #f0fdf4;
-  --okline: #86efac;
-}
+require_once __DIR__ . '/../../tools/sitelib.php';
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e1014;    --fg: #e8eaf0;    --muted: #9aa3b2;
-    --line: #252a33;  --card: #151920;  --accent: #7ab7ff;
-    --code: #1b2028;  --warn: #fbbf24;  --warnbg: #241a08;
-    --warnline: #7c4a03; --ok: #4ade80; --okbg: #0a1f12;
-    --okline: #14532d;
-  }
-}
+$section     = 'macroengine';
+$file        = 'architecture.php';
+$title       = 'Architecture';
+$description = 'How macroEngine keeps 33 module packs independent: the 22 hook slots, what the core owns, and why removal works.';
+$crumbs      = '<a href="../index.php">Home</a> / <a href="index.php">macroEngine</a> / Architecture';
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.wrap { max-width: 880px; margin: 0 auto; padding: 34px 20px 80px; }
-
-/* --- headings ------------------------------------------------------------ */
-
-h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
-h2 { font-size: 1.32rem; margin: 42px 0 12px; padding-top: 20px; border-top: 1px solid var(--line); }
-h3 { font-size: 1.04rem; margin: 26px 0 8px; }
-h4 { font-size: 0.95rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase;
-     letter-spacing: .05em; }
-
-.sub { color: var(--muted); margin: 0 0 6px; font-size: 15px; }
-.lede { font-size: 1.05rem; color: var(--muted); margin: 0 0 18px; }
-
-a { color: var(--accent); }
-a:hover { text-decoration-thickness: 2px; }
-
-/* --- code ---------------------------------------------------------------- */
-
-code, pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13.5px;
-}
-code { background: var(--code); padding: 2px 5px; border-radius: 4px; }
-pre {
-  background: var(--code);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px 16px;
-  overflow-x: auto;
-  line-height: 1.5;
-}
-pre code { background: none; padding: 0; }
-
-/* --- tables -------------------------------------------------------------- */
-
-table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
-th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
-tbody tr:last-child td { border-bottom: none; }
-
-/* --- callouts ------------------------------------------------------------ */
-
-.note, .warnbox, .okbox {
-  border-radius: 8px;
-  padding: 14px 18px;
-  margin: 18px 0;
-  font-size: 14.5px;
-}
-.note { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
-.warnbox { background: var(--warnbg); border: 1px solid var(--warnline); border-left: 4px solid var(--warnline); }
-.warnbox strong { color: var(--warn); }
-.okbox { background: var(--okbg); border: 1px solid var(--okline); border-left: 4px solid var(--okline); }
-.okbox strong { color: var(--ok); }
-
-/* --- layout helpers ------------------------------------------------------ */
-
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
-.card h3 { margin-top: 0; }
-
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
-.grid .card { margin: 0; }
-
-.pill, .tag {
-  display: inline-block;
-  font-size: 12px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--muted);
-  white-space: nowrap;
-}
-.tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; }
-.yes { color: var(--ok); }
-.no { color: var(--warn); }
-
-/* --- table of contents --------------------------------------------------- */
-
-.toc {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 20px;
-  margin: 20px 0 26px;
-  font-size: 14.5px;
-}
-.toc ol, .toc ul { margin: 6px 0 0; padding-left: 22px; }
-.toc li { margin: 3px 0; }
-.toc strong { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-
-/* --- hero and banner ----------------------------------------------------- */
-
-.hero { padding: 10px 0 26px; }
-.hero h1 { font-size: 2.35rem; }
-.banner {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--warnline);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin: 0 0 22px;
-  font-size: 14px;
-}
-.icon { font-size: 1.3rem; line-height: 1; margin-right: 6px; }
-
-/* --- site navigation ----------------------------------------------------- */
-
-.nav {
-  border-bottom: 1px solid var(--line);
-  margin: 0 0 26px;
-  padding: 0 0 12px;
-  font-size: 14px;
-}
-.nav a { margin-right: 16px; text-decoration: none; }
-.nav a:hover { text-decoration: underline; }
-.nav .here { color: var(--fg); font-weight: 600; }
-
-.crumbs { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
-.crumbs a { text-decoration: none; }
-
-footer {
-  margin-top: 56px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 13.5px;
-}
-footer a { color: var(--muted); }
-
-/* --- print --------------------------------------------------------------- */
-
-@media print {
-  .nav, footer { display: none; }
-  body { background: #fff; color: #000; }
-  a { color: #000; text-decoration: underline; }
-  pre, table { break-inside: avoid; }
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-<nav class="nav"><a href="../index.html">Home</a><a href="../mods/index.html">Mods</a><a href="../macroengine/index.html" class="here">macroEngine</a><a href="../datapacks/index.html">Datapacks</a><a href="../docs/api.html">API</a><a href="../docs/versions.html">Versions</a><a href="../docs/php.html">PHP</a><a href="../docs/warnings.html">Warnings</a><a href="../docs/archive.html">Archive</a><a href="../docs/maintainers.html">Maintainers</a></nav>
-<p class="crumbs"><a href="../index.html">Home</a> / <a href="index.html">macroEngine</a> / Architecture</p>
+ob_start();
+?>
+<p class="crumbs"><a href="../index.php">Home</a> / <a href="index.php">macroEngine</a> / Architecture</p>
 <div class="hero">
   <h1>Architecture</h1>
   <p class="lede">One core pack, 33 module packs, 22 hook slots and no module
@@ -359,10 +191,7 @@ footer a { color: var(--muted); }
   module - and a seam added for one module is a sign that module should own the
   work instead.
 </div>
-<footer>
-  <p><strong>VortaForge documentation</strong> &mdash; published from <a href="https://github.com/vortaforge/docs">vortaforge/docs</a>. Corrections go there, not here.</p>
-  <p>The datapacks under <code>archived/</code> are kept as readable history. They are archived and disarmed: not maintained, not supported, and not recommended for a live server.</p>
-</footer>
-</div>
-</body>
-</html>
+<?php
+$body = ob_get_clean();
+
+vf_render($section, $file, $title, $description, $body, $crumbs);

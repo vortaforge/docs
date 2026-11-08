@@ -1,12 +1,15 @@
 /* ==========================================================================
-   VortaForge docs - one stylesheet for every page.
+   VortaForge docs - the one stylesheet.
 
-   Why inline and not a linked file: the site is published to GitHub Pages and
-   also rendered in an in-app preview that has no network access at all. A
-   linked stylesheet is a network request, so it would disappear there. Every
-   page therefore embeds this text in a <style> block, and tools/sync_style.py
-   is what keeps those copies identical - it is not a build step, just a check
-   and a copy so the seven near-duplicates that used to exist cannot come back.
+   Why inline and not a linked file: the page has to render in a previewer
+   with no network access at all, and a linked stylesheet is a network request.
+   So tools/sitelib.php reads this file and emits it into each page's <style>
+   block at render time.
+
+   That is a single source, not fifteen copies: the near-duplicate stylesheets
+   that used to accumulate cannot come back, because there is nothing to
+   duplicate. tools/render_pages.php checks the result - the stylesheet must
+   appear exactly once in every rendered page.
    ========================================================================== */
 
 :root {

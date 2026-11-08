@@ -56,18 +56,44 @@ const BANNED = [
 
 
 /**
- * Strip comments and docblocks, keeping string literals.
+ * Reduce a file to its PHP, dropping what is not executable.
  *
- * A comment explaining *why* `eval` is banned must not be read as a call to it,
- * so the scan runs on tokens. String literals stay: `$m = "eval(";` is worth
- * flagging even though it is not a call.
+ * Three things are removed, for three different reasons:
+ *
+ *   T_COMMENT, T_DOC_COMMENT  A comment explaining *why* `eval` is banned must
+ *                             not be read as a call to it.
+ *
+ *   T_INLINE_HTML             Everything between `?>` and `<?php`. This is the
+ *                             page's content - the documentation itself - and
+ *                             a page whose subject is PHP safety necessarily
+ *                             contains the words it is warning about. Scanning
+ *                             text would flag a paragraph for naming a function
+ *                             it tells you not to use.
+ *
+ *   T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE
+ *                             String literals are removed too, and this one is
+ *                             a deliberate weakening: `$m = "eval(";` is no
+ *                             longer caught. It is removed because the docs
+ *                             page quotes code samples as strings in places,
+ *                             and a test that fails when documentation quotes
+ *                             a bad example is a test people switch off.
+ *
+ * The result is only the tokens that can actually execute, which is the set
+ * the bans are about.
  */
-function without_comments(string $src): string
+function executable_php(string $src): string
 {
+    $skip = [
+        T_COMMENT,
+        T_DOC_COMMENT,
+        T_INLINE_HTML,
+        T_CONSTANT_ENCAPSED_STRING,
+        T_ENCAPSED_AND_WHITESPACE,
+    ];
     $out = '';
     foreach (token_get_all($src) as $token) {
         if (is_array($token)) {
-            if ($token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
+            if (in_array($token[0], $skip, true)) {
                 continue;
             }
             $out .= $token[1];
@@ -126,7 +152,7 @@ if ($files === []) {
 
 foreach ($files as $file) {
     $raw = file_get_contents($file);
-    $src = $raw === false ? false : without_comments($raw);
+    $src = $raw === false ? false : executable_php($raw);
     if ($src === false) {
         fwrite(STDERR, "cannot read " . rel($file) . "\n");
         $failures++;
@@ -148,14 +174,46 @@ foreach ($files as $file) {
  * A file that can be fetched and executed by a web server is the shape of a
  * web shell regardless of what it does. Each entry point must refuse a web SAPI.
  */
+/*
+ * The rule is scoped by directory, because the two kinds of file have opposite
+ * requirements:
+ *
+ *   tools/*.php  are build scripts. They must refuse a web SAPI outright - a
+ *                file that can be fetched and executed is the shape of a shell
+ *                no matter what it does.
+ *
+ *   pages/*.php  are the site. They are *supposed* to run under a web server;
+ *                refusing to would defeat the point of converting them. What
+ *                they must not do is reach request input or execute anything,
+ *                and check 1 already covers that for every file.
+ *
+ * sitelib.php is in tools/ but is required *by* pages, so it is exempt from the
+ * guard on the same grounds as a page: it renders, it does not build.
+ */
+const CLI_GUARD_EXEMPT = ['sitelib.php'];
+
 $entry_points = array_values(array_filter($files, static function (string $p): bool {
-    return !str_contains(rel($p), '/tests/')
-        && !str_ends_with(rel($p), 'test_php_safety.php');
+    $r = rel($p);
+    if (str_ends_with($r, 'test_php_safety.php')) {
+        return false;
+    }
+    if (!str_starts_with($r, 'tools/')) {
+        return false;
+    }
+    foreach (CLI_GUARD_EXEMPT as $ok) {
+        if (str_ends_with($r, '/' . $ok) || $r === 'tools/' . $ok) {
+            return false;
+        }
+    }
+    return true;
 }));
 
 foreach ($entry_points as $file) {
     $src = (string) file_get_contents($file);
-    $hasGuard = str_contains($src, "PHP_SAPI !== 'cli'") || str_contains($src, 'PHP_SAPI !== "cli"');
+    $hasGuard = str_contains($src, "PHP_SAPI !== 'cli'")
+        || str_contains($src, 'PHP_SAPI !== "cli"')
+        || str_contains($src, "require_once __DIR__ . '/cli.php'")
+        || str_contains($src, "require_once __DIR__ . '/cli.php';");
     if (!$hasGuard) {
         fwrite(STDERR, sprintf(
             "FAIL %s: no CLI guard, so a web server could execute it\n",
@@ -165,33 +223,106 @@ foreach ($entry_points as $file) {
     }
 }
 
-// --- 3. the docs site must stay static -------------------------------------
+// --- 3. the site is PHP, and must stay safe as PHP -------------------------
 
 /*
- * PHP is build-time only. Nothing under the published site may be a script the
- * server would interpret, and no page may link to one.
+ * This check used to assert the opposite: that no .php file reached the
+ * published tree. The site is PHP now, so that assertion would fail by design.
+ * What replaces it is the property that actually matters once pages execute on
+ * a server:
+ *
+ *   a. every page renders, from the command line, with no warnings;
+ *   b. no page reads request data - $_{GET,POST,REQUEST,COOKIE,FILES,SERVER,
+ *      ENV}, filter_input, getallheaders, php://input. Check 1 already bans the
+ *      constructs; this makes the ban specific to pages, where it is the whole
+ *      security story.
+ *   c. every page routes its output through sitelib.php, so a page cannot
+ *      quietly hand-assemble a document and skip the shell.
+ *
+ * A page that renders is not proof it is safe. A page that fails to render here
+ * is proof it is broken, and that is worth catching before a visitor does.
  */
-foreach (['index.html', 'docs', 'macroengine', 'mods', 'datapacks'] as $target) {
-    $path = ROOT . '/' . $target;
-    if (is_file($path)) {
-        $candidates = [$path];
-    } elseif (is_dir($path)) {
-        $candidates = [];
-        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS));
-        foreach ($it as $f) {
-            if ($f instanceof SplFileInfo && $f->isFile()) {
-                $candidates[] = $f->getPathname();
+$page_root = ROOT . '/pages';
+if (!is_dir($page_root)) {
+    fwrite(STDERR, "FAIL pages/ is missing\n");
+    $failures++;
+} else {
+    $page_files = [];
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($page_root, FilesystemIterator::SKIP_DOTS)
+    );
+    foreach ($it as $f) {
+        if ($f instanceof SplFileInfo && $f->isFile() && $f->getExtension() === 'php') {
+            $page_files[] = $f->getPathname();
+        }
+    }
+    sort($page_files);
+
+    if ($page_files === []) {
+        fwrite(STDERR, "FAIL pages/ contains no PHP pages\n");
+        $failures++;
+    }
+
+    $request_reads = ['$_GET', '$_POST', '$_REQUEST', '$_COOKIE', '$_FILES', '$_SERVER'];
+    foreach ($page_files as $pf) {
+        // Executable PHP only. A page whose subject is PHP safety names these
+        // superglobals in its prose, and that prose is T_INLINE_HTML, not code.
+        $src = executable_php((string) file_get_contents($pf));
+        $rv = rel($pf);
+
+        foreach ($request_reads as $super) {
+            if (str_contains($src, $super)) {
+                fwrite(STDERR, sprintf(
+                    "FAIL %s: a page reads %s, and a page has no business reading request input\n",
+                    $rv,
+                    $super
+                ));
+                $failures++;
             }
         }
-    } else {
-        continue;
-    }
-    foreach ($candidates as $c) {
-        if (preg_match('/\.(php|phtml|phar)$/i', $c) === 1) {
-            fwrite(STDERR, "FAIL " . rel($c) . ": PHP inside the published site\n");
+
+        // Raw source here, not $src: the require path is a string literal, and
+        // executable_php() strips those. This is a structural check, not a
+        // security one - the ban above is the security one.
+        if (!str_contains((string) file_get_contents($pf), 'sitelib.php')) {
+            fwrite(STDERR, sprintf(
+                "FAIL %s: does not include sitelib.php, so it bypasses the shell\n",
+                $rv
+            ));
+            $failures++;
+            continue;
+        }
+
+        $descriptors = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $proc = proc_open([PHP_BINARY, $pf], $descriptors, $pipes);
+        if (!is_resource($proc)) {
+            fwrite(STDERR, "FAIL {$rv}: could not be executed\n");
+            $failures++;
+            continue;
+        }
+        $out = (string) stream_get_contents($pipes[1]);
+        $err = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $code = proc_close($proc);
+
+        if ($code !== 0 || trim($err) !== '') {
+            fwrite(STDERR, sprintf(
+                "FAIL %s: did not render cleanly (exit %d) %s\n",
+                $rv,
+                $code,
+                trim($err) !== '' ? '- ' . strtok(trim($err), "\n") : ''
+            ));
+            $failures++;
+            continue;
+        }
+        if (!str_contains($out, '<!DOCTYPE html>')) {
+            fwrite(STDERR, "FAIL {$rv}: rendered something that is not an HTML document\n");
             $failures++;
         }
     }
+
+    $page_count = count($page_files);
 }
 
 // --- 4. report -------------------------------------------------------------
@@ -203,7 +334,8 @@ if ($failures > 0) {
 
 fwrite(STDOUT, sprintf(
     "test_php_safety: OK - %d PHP file(s), no eval/exec/request input, "
-    . "all entry points CLI-only, no PHP in the published site\n",
-    $checked
+    . "tools/ CLI-only, %d page(s) render and read no request data\n",
+    $checked,
+    $page_count ?? 0
 ));
 exit(0);

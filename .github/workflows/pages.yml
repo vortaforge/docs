@@ -1,18 +1,17 @@
-# Publishes the static documentation site to GitHub Pages.
+# Builds the PHP documentation site and publishes a static snapshot.
 #
-# Deliberately plain: no framework, no npm, no server-side anything. The site is
-# hand-written HTML with inline CSS so that a preview renderer with no network access
-# still shows it correctly, and so that nothing can silently break because a CDN
-# moved.
+# The site is PHP: every page under pages/ is a script, and a PHP 8.1+ host
+# serves it directly. GitHub Pages cannot run PHP - it would hand a visitor the
+# source of api.php instead of the page - so this workflow does the one thing
+# Pages can accept: it renders all fifteen pages to HTML and publishes that.
 #
-# PHP is used at BUILD TIME ONLY. Two CLI scripts run before the deploy: one writes
-# _site/docs-index.json, the other refuses to let a PHP file reach the published
-# tree. Nothing is executed at request time and no .php file is uploaded as part of
-# the site - the artifact is assembled into _publish/ from an explicit allow-list.
+# The snapshot is generated from the pages, so it cannot drift from them. A page
+# that fails to render fails here rather than in front of a reader.
 name: Docs
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -32,47 +31,53 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install PHP (build-time only)
+      - name: Install PHP
         run: |
           set -eu
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends php-cli >/dev/null
           php --version
 
-      - name: Build the documentation index
-        run: php tools/build_docs_index.php --root=. --out=_site/docs-index.json
-
+      # Fails on eval, the exec family, request superglobals, a build script that
+      # a web server could execute, and a page that reads request input.
       - name: Check PHP safety
         run: php tools/test_php_safety.php
 
-      - name: Verify inline styles have not drifted
-        run: python3 tools/sync_style.py --check
+      # Renders all 15 pages in-process. Fails if any page throws or warns, or if
+      # the stylesheet or navigation is missing from the output.
+      - name: Render every page
+        run: php tools/render_pages.php --verbose
 
-      - name: Verify the site is self-contained and internally linked
+      - name: Build the documentation index
+        run: php tools/build_docs_index.php --root=. --out=_site/docs-index.json
+
+      # Produces the snapshot that Pages will actually serve.
+      - name: Write the static snapshot
+        run: php tools/render_pages.php --out=build
+
+      - name: Verify the snapshot is self-contained and internally linked
         run: |
           python3 - <<'PY'
           import pathlib, re, sys
 
-          root = pathlib.Path(".")
-          pages = sorted(p for p in root.rglob("*.html"))
+          root = pathlib.Path("build")
+          pages = sorted(root.rglob("*.html"))
           if not pages:
-              sys.exit("no HTML pages found")
+              sys.exit("no HTML pages in the snapshot")
 
           problems = []
 
-          # 1. No external resources: the in-app preview has no network access, and a
-          #    CDN dependency is a silent single point of failure for a docs site.
+          # 1. No external resources: a CDN dependency is a silent single point
+          #    of failure, and the pages inline their stylesheet for this reason.
           for page in pages:
               text = page.read_text(encoding="utf-8")
               for m in re.finditer(r'(?:src|href)=["\'](https?://[^"\']+)["\']', text):
-                  url = m.group(1)
-                  # Plain links to other sites are fine; loading assets is not.
                   if m.group(0).startswith("src="):
-                      problems.append(f"{page}: external asset {url}")
+                      problems.append(f"{page}: external asset {m.group(1)}")
               if "<script" in text and "src=" in text:
                   problems.append(f"{page}: external script tag")
 
-          # 2. Every relative internal link must resolve to a real file.
+          # 2. Every relative link must resolve inside the snapshot.
           for page in pages:
               text = page.read_text(encoding="utf-8")
               for m in re.finditer(r'href=["\']([^"\'#?]+)(?:[#?][^"\']*)?["\']', text):
@@ -85,8 +90,13 @@ jobs:
                   if not resolved.exists():
                       problems.append(f"{page}: broken link -> {target}")
 
+          # 3. The snapshot must be HTML. A .php file here would mean the
+          #    renderer leaked source into the published tree.
+          for leaked in list(root.rglob("*.php")):
+              problems.append(f"{leaked}: PHP in the snapshot")
+
           if problems:
-              print("site validation failed:", file=sys.stderr)
+              print("snapshot validation failed:", file=sys.stderr)
               for p in problems:
                   print("  " + p, file=sys.stderr)
               sys.exit(1)
@@ -94,33 +104,15 @@ jobs:
           print(f"ok: {len(pages)} pages, self-contained, all internal links resolve")
           PY
 
-      # The artifact is an allow-list, not a directory copy. `path: .` would ship
-      # tools/*.php to the web root, which is exactly what the safety test above
-      # exists to prevent.
-      - name: Assemble the publishable tree
-        run: |
-          set -eu
-          rm -rf _publish
-          mkdir -p _publish
-          cp index.html _publish/
-          cp -r docs macroengine mods datapacks assets _publish/
-          # Defensive: the allow-list above is already explicit, but a stray .php
-          # anywhere in it should fail the deploy rather than be uploaded.
-          if find _publish -type f \( -name '*.php' -o -name '*.phtml' -o -name '*.phar' \) | grep -q .; then
-            echo "PHP found in the publishable tree:" >&2
-            find _publish -type f \( -name '*.php' -o -name '*.phtml' -o -name '*.phar' \) >&2
-            exit 1
-          fi
-          find _publish -type f | sort
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: _publish
+          path: build
 
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write

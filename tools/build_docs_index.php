@@ -68,18 +68,27 @@ function fail(string $message): never
  */
 function describe_page(string $root, string $rel): array
 {
-    $file = $root . '/' . $rel;
-    $html = file_get_contents($file);
-    if ($html === false) {
-        fail("cannot read {$rel}");
-    }
+    // $rel is the site path (no "pages/" prefix); the source lives under pages/.
+    $file = $root . '/pages/' . $rel;
+
+    /*
+     * The index is built from *rendered* output, not from source.
+     *
+     * When the pages were static HTML those were the same thing. They are not
+     * any more: the source no longer contains a <title>, a navigation or a
+     * stylesheet, all of which come from tools/sitelib.php at render time. So
+     * the page is rendered here exactly as a visitor would receive it. That also
+     * makes this tool a smoke test - a page that throws while being indexed is a
+     * page that would throw for a reader.
+     */
+    $html = render_page($file, $rel);
 
     $title = $rel;
     if (preg_match('#<title>(.*?)</title>#s', $html, $m) === 1) {
         $title = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        // Titles are written as "<Page> &mdash; VortaForge Docs"; the suffix is
-        // the site, not the page.
-        $title = preg_replace('/\s+(&mdash;|—|-)\s+VortaForge Docs$/u', '', $title) ?? $title;
+        // Titles are written as "<Page> &mdash; VortaForge documentation"; the
+        // suffix is the site, not the page.
+        $title = preg_replace('/\s+(&mdash;|—|-)\s+VortaForge documentation$/u', '', $title) ?? $title;
     }
 
     // Words: strip tags, strip script/style bodies, split on whitespace.
@@ -105,26 +114,68 @@ function describe_page(string $root, string $rel): array
     ];
 }
 
-/** @return list<string> every .html under root, sorted, relative to root */
+/** Render a page in-process and return its HTML. */
+function render_page(string $file, string $rel): string
+{
+    set_error_handler(static function (int $no, string $msg, string $f, int $line): bool {
+        throw new ErrorException($msg, 0, $no, $f, $line);
+    });
+    ob_start();
+    try {
+        (static function (string $__page): void {
+            require $__page;
+        })($file);
+        $html = (string) ob_get_clean();
+    } catch (Throwable $e) {
+        ob_end_clean();
+        fail(sprintf(
+            '%s did not render - %s at %s:%d',
+            $rel,
+            $e->getMessage(),
+            basename($e->getFile()),
+            $e->getLine()
+        ));
+    } finally {
+        restore_error_handler();
+    }
+    return $html;
+}
+
+/**
+ * Every page under pages/, sorted, relative to the site root.
+ *
+ * The reported path is the .php file, because that is what a server serves.
+ * Writing ".html" here would produce an index of URLs that return 404 on a
+ * deployment where PHP runs.
+ */
 function collect_pages(string $root): array
 {
+    $pageRoot = $root . '/pages';
+    if (!is_dir($pageRoot)) {
+        fail('pages/ is missing');
+    }
+
     $pages = [];
     $it = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
+        new RecursiveDirectoryIterator($pageRoot, FilesystemIterator::SKIP_DOTS)
     );
     foreach ($it as $file) {
         if (!$file instanceof SplFileInfo || !$file->isFile()) {
             continue;
         }
         $path = $file->getPathname();
-        if (str_ends_with($path, '.html') === false) {
+        if (!str_ends_with($path, '.php')) {
             continue;
         }
-        // Never index a page under the ignored build output.
-        if (str_contains($path, '/_site/')) {
-            continue;
+        // Never index generated or vendored output.
+        foreach (['/build/', '/vendor/', '/node_modules/'] as $skip) {
+            if (str_contains($path, $skip)) {
+                continue 2;
+            }
         }
-        $pages[] = ltrim(substr($path, strlen($root)), '/');
+        // Strip the pages/ prefix: the site root is what a URL says, not the
+        // directory the source happens to live in.
+        $pages[] = substr($path, strlen($pageRoot) + 1);
     }
     sort($pages);
     return $pages;
