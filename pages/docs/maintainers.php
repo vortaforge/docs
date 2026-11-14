@@ -133,7 +133,7 @@ ob_start();
     <tr><td><code>tools/sitelib.php</code></td><td>required by every page</td>
         <td>the shell - doctype, head, nav, footer, inlined stylesheet</td></tr>
     <tr><td><code>tools/render_pages.php</code></td><td><code>php-cli</code></td>
-        <td>a pass/fail over all 15 pages; with <code>--out=build</code> the
+        <td>a pass/fail over all 16 pages; with <code>--out=build</code> the
             static snapshot</td></tr>
     <tr><td><code>tools/build_docs_index.php</code></td><td><code>php-cli</code></td>
         <td><code>_site/docs-index.json</code> - every page, its section and

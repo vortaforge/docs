@@ -55,6 +55,8 @@ ob_start();
     <tr><td>Write a module</td>
         <td><a href="docs/api.php">API</a> &mdash; the 22 slots and the
             <code>core/internal/</code> rule</td></tr>
+    <tr><td>Open a dialog from a datapack</td>
+        <td><a href="docs/dialog.php">Vortex dialog API</a></td></tr>
     <tr><td>Look up a command</td>
         <td><a href="macroengine/reference.php">Command reference</a> (3,700
             words, every command)</td></tr>

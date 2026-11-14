@@ -34,6 +34,7 @@ Paths are site paths; the `.php` file is the real one.
 | `datapacks/index.php` | The twelve archived packs and their pack formats |
 | `docs/api.php` | The module contract: 22 slots, naming, what `verify.py` checks |
 | `docs/versions.php` | Which build targets which release; the pack format decoder |
+| `docs/dialog.php` | The vortex dialog module: builder, callbacks, hooks, what is unverified |
 | `docs/warnings.php` | What "disarmed" means, and why the gates were removed |
 | `docs/archive.php` | All 32 retired projects and why each stopped |
 | `docs/maintainers.php` | Release flow, archive rules, what the project will not claim |
@@ -56,7 +57,7 @@ build/                  generated static snapshot (not committed)
 
 ```sh
 php -S localhost:8000 -t pages     # or any PHP 8.1+ host pointed at pages/
-php tools/render_pages.php         # render all 15 pages, fail on any error
+php tools/render_pages.php         # render all 16 pages, fail on any error
 php tools/test_php_safety.php      # the bans, the CLI guards, the page rules
 php tools/build_docs_index.php     # _site/docs-index.json
 php tools/render_pages.php --out=build   # the static snapshot

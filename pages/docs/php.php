@@ -131,7 +131,7 @@ vf_render($section, $file, $title, $description, $body, $crumbs);</code></pre>
 </div>
 
 <h2 id="static">The static snapshot, for hosts that cannot do this</h2>
-<p><code>tools/render_pages.php --out=build</code> renders all fifteen pages and
+<p><code>tools/render_pages.php --out=build</code> renders all sixteen pages and
    writes the result as <code>.html</code>. Because the pages are stateless and
    their links are relative, the output is a complete static site - the same
    thing GitHub Pages publishes.</p>
@@ -154,7 +154,7 @@ vf_render($section, $file, $title, $description, $body, $crumbs);</code></pre>
     </tr>
     <tr>
       <td><code>tools/render_pages.php</code></td>
-      <td>Renders all 15 pages in-process; checks the stylesheet and navigation
+      <td>Renders all 16 pages in-process; checks the stylesheet and navigation
           reached each one; can write the static snapshot</td>
       <td>Any page throws or warns, or is missing the stylesheet</td>
     </tr>
@@ -181,7 +181,7 @@ vf_render($section, $file, $title, $description, $body, $crumbs);</code></pre>
 
 <p>The index builder renders each page instead of reading its source, and that
    is deliberate: a page that cannot be rendered cannot be indexed, so the index
-   doubles as a smoke test over all fifteen.</p>
+   doubles as a smoke test over all sixteen.</p>
 
 <h2 id="not">What PHP here must never be</h2>
 <p>PHP has a well-known failure mode where a small helper grows into a web

@@ -42,6 +42,7 @@ function vf_nav(): array
         ['datapacks',    'index.php',              'Datapacks'],
         ['docs',         'api.php',                'API'],
         ['docs',         'versions.php',           'Versions'],
+        ['docs',         'dialog.php',             'Dialog'],
         ['docs',         'php.php',                'PHP'],
         ['docs',         'warnings.php',           'Warnings'],
         ['docs',         'archive.php',            'Archive'],
